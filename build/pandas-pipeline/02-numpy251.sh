@@ -24,7 +24,7 @@ if [ ! -f "$NB/numpy-$NUMPY_VERSION/numpy/_core/code_generators/generate_umath.p
   cd "$NB"
   URL="$(curl -fsSL "https://pypi.org/pypi/numpy/$NUMPY_VERSION/json" \
     | python3 -c "import json,sys; print([u['url'] for u in json.load(sys.stdin)['urls'] if u['url'].endswith('.tar.gz')][0])")"
-  curl -fL --retry 3 --retry-all-errors "$URL" -o "numpy-$NUMPY_VERSION.tar.gz"
+  curl -fL --retry 5 --retry-delay 3 --retry-all-errors "$URL" -o "numpy-$NUMPY_VERSION.tar.gz"
   tar xzf "numpy-$NUMPY_VERSION.tar.gz"
 fi
 SRC="$NB/numpy-$NUMPY_VERSION"

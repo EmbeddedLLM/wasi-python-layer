@@ -16,7 +16,7 @@ download() {
         rm -f "$file"
     fi
     echo "  [download] $file"
-    curl -fsSL --retry 3 --retry-all-errors "$url" -o "$file"
+    curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 "$url" -o "$file"
 }
 
 echo ">>> Downloading sources..."

@@ -20,7 +20,7 @@ OS="$(uname -s | sed -e 's/Darwin/macos/' -e 's/Linux/linux/')"
 if [ ! -x wasi-sdk/bin/clang ]; then
   rm -rf wasi-sdk
   echo ">>> downloading wasi-sdk-27"
-  curl -fL --retry 3 --retry-all-errors "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-27/wasi-sdk-27.0-${ARCH}-${OS}.tar.gz" \
+  curl -fL --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-27/wasi-sdk-27.0-${ARCH}-${OS}.tar.gz" \
     -o wasi-sdk.tar.gz
   tar xf wasi-sdk.tar.gz && mv "wasi-sdk-27.0-${ARCH}-${OS}" wasi-sdk && rm wasi-sdk.tar.gz
 else
