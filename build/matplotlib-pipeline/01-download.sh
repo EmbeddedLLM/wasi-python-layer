@@ -8,9 +8,15 @@ cd "$MPL_BUILD"
 
 download() {
     local url="$1" file="$2"
-    if [ -f "$file" ]; then echo "  [skip] $file exists"; return; fi
+    if [ -f "$file" ]; then
+        # A cached/previous download may be truncated (tar failed on a cold CI
+        # run); verify it extracts before trusting it, or re-download.
+        if tar tf "$file" >/dev/null 2>&1; then echo "  [skip] $file exists"; return; fi
+        echo "  [redownload] $file (invalid archive)"
+        rm -f "$file"
+    fi
     echo "  [download] $file"
-    curl -sL "$url" -o "$file"
+    curl -fsSL --retry 3 --retry-all-errors "$url" -o "$file"
 }
 
 echo ">>> Downloading sources..."

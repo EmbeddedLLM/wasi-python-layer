@@ -16,10 +16,11 @@ cd "$WASI_BUILD"
 ARCH="$(uname -m)"; [ "$ARCH" = "aarch64" ] && ARCH=arm64
 OS="$(uname -s | sed -e 's/Darwin/macos/' -e 's/Linux/linux/')"
 
-# --- wasi-sdk-27 ---
-if [ ! -d wasi-sdk ]; then
+# --- wasi-sdk-27 (guard on bin/clang: a cached partial extraction must not be trusted) ---
+if [ ! -x wasi-sdk/bin/clang ]; then
+  rm -rf wasi-sdk
   echo ">>> downloading wasi-sdk-27"
-  curl -fL "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-27/wasi-sdk-27.0-${ARCH}-${OS}.tar.gz" \
+  curl -fL --retry 3 --retry-all-errors "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-27/wasi-sdk-27.0-${ARCH}-${OS}.tar.gz" \
     -o wasi-sdk.tar.gz
   tar xf wasi-sdk.tar.gz && mv "wasi-sdk-27.0-${ARCH}-${OS}" wasi-sdk && rm wasi-sdk.tar.gz
 else

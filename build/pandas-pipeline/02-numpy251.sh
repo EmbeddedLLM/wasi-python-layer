@@ -16,13 +16,15 @@ NB="$WASI_BUILD/numpy251"
 mkdir -p "$NB"
 export PATH="$WASI_BUILD/build-venv/bin:$PATH"   # meson needs cython
 
-# --- fetch numpy sdist ---
-if [ ! -d "$NB/numpy-$NUMPY_VERSION" ]; then
+# --- fetch numpy sdist (marker-verified: a cached partial extraction must not
+# be trusted — the umath codegen needs numpy/_core/code_generators) ---
+if [ ! -f "$NB/numpy-$NUMPY_VERSION/numpy/_core/code_generators/generate_umath.py" ]; then
+  rm -rf "$NB/numpy-$NUMPY_VERSION"
   echo ">>> downloading numpy $NUMPY_VERSION sdist"
   cd "$NB"
   URL="$(curl -fsSL "https://pypi.org/pypi/numpy/$NUMPY_VERSION/json" \
     | python3 -c "import json,sys; print([u['url'] for u in json.load(sys.stdin)['urls'] if u['url'].endswith('.tar.gz')][0])")"
-  curl -fL "$URL" -o "numpy-$NUMPY_VERSION.tar.gz"
+  curl -fL --retry 3 --retry-all-errors "$URL" -o "numpy-$NUMPY_VERSION.tar.gz"
   tar xzf "numpy-$NUMPY_VERSION.tar.gz"
 fi
 SRC="$NB/numpy-$NUMPY_VERSION"
