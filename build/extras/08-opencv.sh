@@ -140,10 +140,12 @@ cat > "$BUILD/force-shared.cmake" <<'EOF'
 set(_cv_shared_rule "<CMAKE_CXX_COMPILER> <CMAKE_CXX_FLAGS> <LINK_FLAGS> <CMAKE_CXX_SHARED_LIBRARY_CREATE_CXX_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
 set(_cv_shared_rule_c "<CMAKE_C_COMPILER> <CMAKE_C_FLAGS> <LINK_FLAGS> <CMAKE_C_SHARED_LIBRARY_CREATE_C_FLAGS> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
 foreach(_v CMAKE_CXX_CREATE_SHARED_LIBRARY CMAKE_CXX_CREATE_SHARED_MODULE)
-  set(${_v} "${_cv_shared_rule}"); set(${_v} "${_cv_shared_rule}" CACHE INTERNAL "" FORCE)
+  set(${_v} "${_cv_shared_rule}")
+  set(${_v} "${_cv_shared_rule}" CACHE INTERNAL "" FORCE)
 endforeach()
 foreach(_v CMAKE_C_CREATE_SHARED_LIBRARY CMAKE_C_CREATE_SHARED_MODULE)
-  set(${_v} "${_cv_shared_rule_c}"); set(${_v} "${_cv_shared_rule_c}" CACHE INTERNAL "" FORCE)
+  set(${_v} "${_cv_shared_rule_c}")
+  set(${_v} "${_cv_shared_rule_c}" CACHE INTERNAL "" FORCE)
 endforeach()
 EOF
 mkdir -p "$BUILD/sjlj-shim"

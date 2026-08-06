@@ -92,12 +92,23 @@ done
 # --- sitecustomize.py (fix encodings for font manager) ---
 cp "$HERE/sitecustomize.py" "$SITE/sitecustomize.py"
 
+# --- matplotlib config dir (must ship in the tree) ---
+# The /site-packages mount is read-only in the guest at pre-init AND runtime, so
+# matplotlib cannot create its cache dir itself. sitecustomize sets MPLCONFIGDIR
+# to /site-packages/.mpl-config; shipping the empty dir makes makedirs(exist_ok)
+# succeed on the RO mount and matplotlib falls back to an in-memory font scan
+# (cache writes are best-effort). Cold-build regression caught 2026-08-06.
+mkdir -p "$SITE/.mpl-config"
+
 # --- mmap stub (no mmap on wasm) ---
 cp "$WASI_BUILD/combined-site/mmap.py" "$SITE/mmap.py" 2>/dev/null || true
 
 echo "=== Assembled site-packages at $SITE ==="
 echo "  matplotlib .so: $(find "$SITE/matplotlib" -name '*.so' | wc -l) files"
 echo "  total .py:      $(find "$SITE" -name '*.py' | wc -l) files"
+
+# --- strip host-platform extensions (fonttools qu2cu etc.) before verifying ---
+bash "$HERE/../strip-host-extensions.sh" "$SITE"
 
 # --- verify in eryx ---
 ERYX_PY="${ERYX_PY:-/tmp/eryx-probe/bin/python}"
