@@ -53,4 +53,7 @@ for s in 01-pure-wheels 02-regex 03-audioop 04-pyyaml 05-orjson 06-tiktoken 07-s
     SITE="$SITE" bash "$REPO/build/extras/$s.sh"
 done
 
+# --- strip host-platform extensions (pure-wheel drift: fonttools qu2cu) ---
+bash "$REPO/build/strip-host-extensions.sh" "$SITE"
+
 echo ">>> [assemble-extra] done: $SITE"

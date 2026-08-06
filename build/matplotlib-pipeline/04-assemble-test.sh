@@ -99,6 +99,9 @@ echo "=== Assembled site-packages at $SITE ==="
 echo "  matplotlib .so: $(find "$SITE/matplotlib" -name '*.so' | wc -l) files"
 echo "  total .py:      $(find "$SITE" -name '*.py' | wc -l) files"
 
+# --- strip host-platform extensions (fonttools qu2cu etc.) before verifying ---
+bash "$HERE/../strip-host-extensions.sh" "$SITE"
+
 # --- verify in eryx ---
 ERYX_PY="${ERYX_PY:-/tmp/eryx-probe/bin/python}"
 if [ -x "$ERYX_PY" ]; then
