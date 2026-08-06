@@ -101,6 +101,12 @@ for r in roots:
     for p in Path(r).rglob("*"):
         if p.suffix not in (".cpp", ".hpp", ".h") or any(sk in str(p) for sk in skip):
             continue
+        if p.name == "ovx.cpp":
+            # Hand-patched below — the stripper's depth tracking confounds
+            # its single-line catch bodies and leaves unbalanced ifdefs
+            # (cold-build regression caught 2026-08-06: unterminated
+            # #ifdef HAVE_OPENVX on a virgin 4.12.0 checkout).
+            continue
         lines = p.read_text(errors="ignore").split("\n")
         if any(stmt.match(l) for l in lines):
             p.write_text("\n".join(strip_try_catch(lines))); patched += 1
