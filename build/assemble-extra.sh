@@ -19,7 +19,7 @@ set -euo pipefail
 SITE="${1:?usage: assemble-extra.sh <site-dir> [matplotlib-build-dir] [python]}"
 MPL="${2:-${WASI_BUILD:-/tmp/wasi-build}/matplotlib-build}"
 PY="${3:-python3}"
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 mkdir -p "$SITE"
 
