@@ -103,7 +103,8 @@ cp "$MPL_BUILD/raqm.h" "$MPL_BUILD/raqm-stub/" 2>/dev/null || true
 cp "$MPL_BUILD/raqm-version.h" "$MPL_BUILD/raqm-stub/" 2>/dev/null || true
 cp "$MPL_BUILD/raqm_stub.c" "$MPL_BUILD/raqm-stub/"
 $WASI_SDK/bin/clang --target=wasm32-wasip2 --sysroot=$WASI_SDK/share/wasi-sysroot \
-    -O2 -fPIC -I"$MPL_BUILD/raqm-stub" \
+    -O2 -fPIC -isystem "$MPL_BUILD/fake-headers" \
+    -I"$MPL_BUILD/raqm-stub" \
     -I"$MPL_BUILD/freetype-install/include/freetype2" \
     -c "$MPL_BUILD/raqm-stub/raqm_stub.c" -o "$MPL_BUILD/raqm-stub/raqm_stub.o"
 $WASI_SDK/bin/llvm-ar rcs "$MPL_BUILD/raqm-stub/libraqm.a" "$MPL_BUILD/raqm-stub/raqm_stub.o"
