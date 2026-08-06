@@ -28,6 +28,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export WASI_BUILD="${WASI_BUILD:-/tmp/wasi-build}"
 SITE="${SITE:-$WASI_BUILD/extras-site}"
 WASI_SDK="$WASI_BUILD/wasi-sdk"
+export PATH="$WASI_BUILD/build-venv/bin:$PATH"   # cmake, ninja (system cmake absent in bare containers)
 CROSS_PREFIX="$WASI_BUILD/cpython-wasi/install"
 CROSS_PY="$WASI_BUILD/cross-python.sh"
 NB="$WASI_BUILD/numpy251-install/usr/local/lib/python3.14/site-packages"
