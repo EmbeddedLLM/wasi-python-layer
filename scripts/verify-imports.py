@@ -24,11 +24,39 @@ from pathlib import Path
 IMPORT_CODE = (
     "import numpy, pandas, matplotlib, matplotlib.pyplot\n"
     "import matplotlib.backends.backend_agg\n"
-    "import contourpy, PIL, soundfile, httpx, requests\n"
+    "import contourpy, PIL, soundfile\n"
     "import lxml.etree, bs4, regex, audioop, orjson, simplejson\n"
     "import ruamel.yaml, yaml, tiktoken, tiktoken_ext.openai_public\n"
     "import sympy, skimage, cv2\n"
     "print('ALL IMPORTS OK')"
+)
+
+# The gate must build the factory the way consumers do — with the contract set
+# pre-imported (packages.py DEFAULT_IMPORTS). Pre-importing matplotlib at
+# factory-build time populates its font cache into the site-packages tree
+# (pre-init mount is writable; the runtime mount is read-only, so a fresh tree
+# with no cache fails matplotlib import at runtime otherwise — cold-build
+# regression caught 2026-08-06).
+PRE_IMPORTS: tuple[str, ...] = (
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "matplotlib.backends.backend_agg",
+    "contourpy",
+    "PIL",
+    "soundfile",
+    "lxml.etree",
+    "bs4",
+    "regex",
+    "audioop",
+    "orjson",
+    "simplejson",
+    "ruamel.yaml",
+    "yaml",
+    "tiktoken",
+    "sympy",
+    "skimage",
+    "cv2",
 )
 
 # The cold import of numpy + matplotlib + cv2 + skimage in one execution takes
@@ -52,8 +80,10 @@ def main() -> None:
 
     import eryx
 
-    print(f"[verify] building factory from {site} ...")
-    factory = eryx.SandboxFactory(site_packages=str(site), packages=[], imports=[])
+    print(f"[verify] building factory (pre-importing {len(PRE_IMPORTS)} modules) from {site} ...")
+    factory = eryx.SandboxFactory(
+        site_packages=str(site), packages=[], imports=list(PRE_IMPORTS)
+    )
     sandbox = factory.create_sandbox(
         resource_limits=eryx.ResourceLimits(execution_timeout_ms=_EXEC_TIMEOUT_MS)
     )

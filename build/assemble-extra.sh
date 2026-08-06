@@ -37,11 +37,15 @@ if [ ! -f "$SITE/lxml/etree.so" ]; then
     cp "$MPL/lxml-ext/"*.so "$SITE/lxml/"
 fi
 
-# --- bs4 (pure wheels: beautifulsoup4 + soupsieve) ---
-if [ ! -d "$SITE/bs4" ]; then
-    echo ">>> [assemble-extra] bs4..."
+# --- bs4 (pure wheels: beautifulsoup4 + soupsieve + typing_extensions) ---
+# typing_extensions is a hard dep of bs4 >= 4.15 (bs4.css -> bs4._typing); the
+# layer must ship it (drift: pip resolves 4.15.0 now, the original tree had an
+# older bs4 without the dep — gate caught it 2026-08-06).
+if [ ! -d "$SITE/bs4" ] || [ ! -f "$SITE/typing_extensions.py" ]; then
+    echo ">>> [assemble-extra] bs4 + typing_extensions..."
     mkdir -p "$MPL/bs4-dl"
-    $PY -m pip download beautifulsoup4 soupsieve --only-binary :all: --no-deps -d "$MPL/bs4-dl" 2>/dev/null
+    $PY -m pip download beautifulsoup4 soupsieve typing_extensions \
+        --only-binary :all: --no-deps -d "$MPL/bs4-dl" 2>/dev/null
     for w in "$MPL/bs4-dl"/*.whl; do $PY -c "import zipfile; zipfile.ZipFile('$w').extractall('$SITE')"; done
 else
     echo ">>> [assemble-extra] bs4 already present"
