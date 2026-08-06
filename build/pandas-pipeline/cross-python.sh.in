@@ -15,5 +15,9 @@ export _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata__wasi_wasm32-wasi
 # PYTHONPATH so pure-python tooling imports; sysconfig still reports wasm (the
 # _PYTHON_SYSCONFIGDATA_NAME above). Do NOT add host site-packages here — the
 # wasm numpy include must keep resolving from the wasm install.
-export PYTHONPATH="@WASI_BUILD@/cpython-host/install/lib/python3.14:@WASI_BUILD@/cpython-host/install/lib/python3.14/lib-dynload"
+# APPEND to any inherited PYTHONPATH (numpy's meson sets PYTHONPATH to
+# $SRC/numpy/_core for the umath codegen; clobbering it breaks
+# code_generators.generate_umath — regression d5c5d71, caught by the first
+# cold CI build).
+export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}@WASI_BUILD@/cpython-host/install/lib/python3.14:@WASI_BUILD@/cpython-host/install/lib/python3.14/lib-dynload"
 exec "@WASI_BUILD@/cpython-host/install/bin/python3.14" "$@"
