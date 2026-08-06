@@ -52,6 +52,14 @@ build_flags=
 python_framework_prefix=
 suppress_build_script_link_lines=true
 EOF
+# Ensure the Rust toolchain + wasm32-wasip1 target exist (runners/containers
+# lack it by default; the local dev machine had it installed — gate caught the
+# gap on the first from-scratch CI run, 2026-08-06). Must come BEFORE the env
+# prefix below — a dangling backslash-continuation would drop the env vars.
+if ! rustup target list --installed 2>/dev/null | grep -q "^wasm32-wasip1$"; then
+    echo ">>> [extras/05] installing wasm32-wasip1 target..."
+    rustup target add wasm32-wasip1
+fi
 PYO3_CONFIG_FILE="$PYO3_CONFIG_FILE" \
 CC_wasm32_wasip1="$WASI_SDK/bin/clang" \
 WASI_SDK_PATH="$WASI_SDK" \
@@ -59,13 +67,6 @@ WASI_SYSROOT="$WASI_SDK/share/wasi-sysroot" \
 RUSTFLAGS="-C relocation-model=pic -C link-arg=--experimental-pic \
 -C link-arg=--shared -C link-self-contained=no \
 -C link-arg=-L$WASI_SDK/share/wasi-sysroot/lib/wasm32-wasip1" \
-# Ensure the Rust toolchain + wasm32-wasip1 target exist (runners/containers
-# lack it by default; the local dev machine had it installed — gate caught the
-# gap on the first from-scratch CI run, 2026-08-06).
-if ! rustup target list --installed 2>/dev/null | grep -q "^wasm32-wasip1$"; then
-    echo ">>> [extras/05] installing wasm32-wasip1 target..."
-    rustup target add wasm32-wasip1
-fi
 cargo +1.95 build --release --target wasm32-wasip1
 
 echo ">>> [extras/05] Assembling orjson package..."
