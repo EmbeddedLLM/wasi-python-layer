@@ -79,6 +79,7 @@ pre-imports at factory build and imports at runtime.
 - **Python ABI is fixed at cp314** — the tarball name carries it
   (`cp314-wasm32-wasip2`); a CPython bump is a new artifact, not an update.
 
+## Building
 
 From scratch (~60 min, ~6 GB):
 
