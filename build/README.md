@@ -27,6 +27,6 @@ targets, superseded by the pipelines but kept for reference.
 - `WASI_BUILD` — build root (default `/tmp/wasi-build`)
 - Pipelines need a native toolchain (curl, git, gcc, make) to build the host
   CPython that runs the cross-compile's codegen, plus **jq** (the extras
-  scripts resolve PyPI sdist/wheel URLs with it) and **cmake/ninja** (pinned
-  via pip into the build venv).
+  scripts resolve PyPI sdist/wheel URLs with it), **unzip** (wheel extraction
+  in extras/01 + 07), and **cmake/ninja** (pinned via pip into the build venv).
 - `assemble-extra.sh` needs a venv python for `pip download` of pure wheels.
