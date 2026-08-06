@@ -1,0 +1,4 @@
+# build outputs / local provisioning artifacts
+.venv/
+dist-wasm/
+__pycache__/
