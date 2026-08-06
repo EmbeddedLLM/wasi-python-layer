@@ -34,7 +34,12 @@ fi
 echo ">>> [extras/04] Copying pure yaml package..."
 rm -rf "$SITE/yaml"
 cp -r "$BUILD/src/lib/yaml" "$SITE/yaml"
-# No .so — pure fallback only (v1). Verify the guard: __init__ must not hard-require _yaml.
-grep -n "from yaml._yaml" "$SITE/yaml/__init__.py" | head -2
+# No .so — pure fallback only (v1). Verify the guard: __init__ must not
+# hard-require _yaml. NOTE: a bare `grep | head` pipeline exits non-zero on no
+# match (the GOOD case) under set -o pipefail — check with if, not a pipeline.
+if grep -q "from yaml._yaml" "$SITE/yaml/__init__.py"; then
+    echo "ERROR: yaml/__init__.py hard-requires _yaml" >&2
+    exit 1
+fi
 
 echo ">>> [extras/04] Installed $SITE/yaml ($(find "$SITE/yaml" -name '*.py' | wc -l) py files, no .so)"

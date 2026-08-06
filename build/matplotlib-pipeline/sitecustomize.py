@@ -11,14 +11,17 @@ At runtime, /tmp is mounted and sitecustomize re-runs, preferring /tmp.
 """
 import os
 
-# matplotlib font cache: prefer /tmp (runtime), fall back to /site-packages (wizer pre-init)
-for _mpl_dir in ("/tmp/mpl-config", "/site-packages/.mpl-config"):
-    try:
-        os.makedirs(_mpl_dir, exist_ok=True)
-        os.environ["MPLCONFIGDIR"] = _mpl_dir
-        break
-    except OSError:
-        continue
+# matplotlib font cache: prefer /tmp (runtime), fall back to /site-packages (wizer pre-init).
+# Set MPLCONFIGDIR UNCONDITIONALLY — matplotlib needs the variable; makedirs on the
+# read-only /site-packages mount only succeeds when .mpl-config already exists, so a
+# "set only on success" loop leaves it unset on fresh builds (cold-build regression,
+# 2026-08-06: gate failed with 'Matplotlib requires access to a writable cache dir').
+_mpl_dir = "/tmp/mpl-config"
+try:
+    os.makedirs(_mpl_dir, exist_ok=True)
+except OSError:
+    _mpl_dir = "/site-packages/.mpl-config"
+os.environ["MPLCONFIGDIR"] = _mpl_dir
 
 # Extend encodings search path for missing codecs
 import encodings
