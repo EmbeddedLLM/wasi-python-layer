@@ -1,0 +1,58 @@
+name: WASM Source Gate (from-scratch reproducibility)
+
+# Proves the source track stays honest: a from-scratch scripts/wasm_setup.sh run
+# produces a tree that passes the guest import gate. ~60 min; runs only when the
+# build pipelines / setup scripts / workflows change.
+on:
+  pull_request:
+    paths:
+      - "build/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "build/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  from-scratch:
+    name: from-scratch build + guest import gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Create venv with the gate runtime deps
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          # pyeryx (the eryx pyo3 layer) from the org release wheel. This is the
+          # runtime-rev pin for the gate: bump it with the consumers' runtime pin
+          # (vllm-responses fetch-eryx-runtime.sh / v8-kopi plan).
+          .venv/bin/pip install -q "pyeryx @ https://github.com/EmbeddedLLM/eryx/releases/download/v0.5.0-embeddedllm.4/pyeryx-0.5.0-cp312-abi3-manylinux_2_39_x86_64.whl"
+
+      - name: From-scratch build (wasm_setup.sh)
+        run: |
+          set -euo pipefail
+          bash scripts/wasm_setup.sh
+        timeout-minutes: 90
+        env:
+          WASI_BUILD: /tmp/wasi-build
+
+      - name: Guest import gate
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/verify-imports.py
+        timeout-minutes: 10
+        env:
+          WASI_BUILD: /tmp/wasi-build

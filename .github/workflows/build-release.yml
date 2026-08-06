@@ -1,0 +1,142 @@
+name: Build WASI Python Layer
+
+# Builds the wasm32-wasip2 site-packages tarball (numpy + pandas + matplotlib +
+# soundfile + lxml + bs4 + extras) from source and publishes it as a GitHub
+# release asset: python-site-packages-{abi}-wasm32-wasip2.tar.gz + SHA256SUMS.txt.
+#
+# Triggered on release publish or manual dispatch.
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach artifacts to (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build_wasm_site_packages:
+    name: Build wasm32-wasip2 site-packages
+    runs-on: ubuntu-latest
+    # Step budgets below sum to ~110 min for a cold build; the job budget covers
+    # the cache-upload + publish tail. With the build cache, full runs take ~45 min.
+    timeout-minutes: 150
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Cache build root
+        id: cache-build
+        uses: actions/cache@v4
+        with:
+          # The whole idempotent build root: wasi-sdk, cpython-src/host/wasi,
+          # build-venv, numpy/pandas stage dirs, matplotlib-build (incl. the
+          # assembled mpl-site). Every stage script skips completed steps, so a
+          # cache hit resumes the build instead of restarting it. ~6 GB < the
+          # 10 GB per-repo cache limit; bump the v1 in the key if that grows.
+          path: /tmp/wasi-build
+          key: wasi-build-v1-${{ hashFiles('build/**') }}
+          restore-keys: |
+            wasi-build-v1-
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install cython ninja cmake pybind11 cppy
+
+      - name: Build wasm CPython 3.14
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          # Stage 01 of the pandas pipeline: wasi-sdk-27 + dicej/cpython fork
+          # (branch v3.14.0-wasi-sdk-27) cross-compiled for wasm32-wasip2.
+          bash build/pandas-pipeline/01-toolchain.sh
+        timeout-minutes: 30
+
+      - name: Build numpy 2.5.1 + pandas 3.0.3 (wasm)
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          # Full pandas pipeline: 02 numpy, 03 pandas, 04 assemble ->
+          # combined-site (numpy + pandas + pytz + tzdata).
+          bash build/pandas-pipeline/build-all.sh
+        timeout-minutes: 30
+
+      - name: Build matplotlib + deps (wasm)
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          # Assembles numpy + pandas from combined-site into mpl-site.
+          bash build/matplotlib-pipeline/build-all.sh
+        timeout-minutes: 20
+
+      - name: Build soundfile (wasm)
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          bash build/soundfile-pipeline/build-all.sh
+        timeout-minutes: 10
+
+      - name: Assemble lxml + bs4 + extras into site-packages
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          bash build/assemble-extra.sh \
+            /tmp/wasi-build/matplotlib-build/mpl-site \
+            /tmp/wasi-build/matplotlib-build \
+            python3
+        timeout-minutes: 20
+
+      - name: Package site-packages tarball
+        run: |
+          set -euo pipefail
+          SITE="/tmp/wasi-build/matplotlib-build/mpl-site"
+          OUTDIR="dist-wasm"
+          mkdir -p "$OUTDIR"
+          TARBALL="$OUTDIR/python-site-packages-cp314-wasm32-wasip2.tar.gz"
+          echo "Packaging $SITE -> $TARBALL"
+          tar czf "$TARBALL" -C "$SITE" .
+          sha256sum "$TARBALL" > "$OUTDIR/SHA256SUMS.txt"
+          ls -lh "$TARBALL"
+          cat "$OUTDIR/SHA256SUMS.txt"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-site-packages-${{ steps.meta.outputs.tag }}
+          path: |
+            dist-wasm/python-site-packages-cp314-wasm32-wasip2.tar.gz
+            dist-wasm/SHA256SUMS.txt
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          overwrite_files: true
+          fail_on_unmatched_files: false
+          files: |
+            dist-wasm/python-site-packages-cp314-wasm32-wasip2.tar.gz
+            dist-wasm/SHA256SUMS.txt
