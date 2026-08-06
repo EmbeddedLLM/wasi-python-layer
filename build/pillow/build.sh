@@ -53,6 +53,20 @@ fi
 if [ ! -d "${PILLOW_SRC}" ]; then
   [ -f "${PILLOW_SRC}.tar.gz" ] || curl -fsSL "https://files.pythonhosted.org/packages/00/d5/4903f310765e0ff2b8e91ffe55031ac6af77d982f0156061e20a4d1a8b2d/Pillow-9.5.0.tar.gz" -o "${PILLOW_SRC}.tar.gz"
   tar xzf "${PILLOW_SRC}.tar.gz"
+  # PEP 667 (py3.13+): locals() is a snapshot, so Pillow 9.5.0's get_version —
+  # exec(_version.py) then `locals()["__version__"]` — KeyErrors under the
+  # 3.14 host python (cold-build regression caught 2026-08-06). Redirect to
+  # globals().
+  python3 - << 'PYEOF'
+from pathlib import Path
+p = Path("Pillow-9.5.0/setup.py")
+s = p.read_text()
+s = s.replace('exec(compile(f.read(), version_file, "exec"))',
+              'exec(compile(f.read(), version_file, "exec"), globals())')
+s = s.replace('return locals()["__version__"]', 'return globals()["__version__"]')
+p.write_text(s)
+print("patched Pillow setup.py get_version for PEP 667")
+PYEOF
 fi
 
 # ── clang wrapper: strip host -I/usr/... includes (Trap P9) ──────────────────

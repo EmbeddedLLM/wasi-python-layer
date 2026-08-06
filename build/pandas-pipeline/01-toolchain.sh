@@ -93,16 +93,20 @@ echo ">>> generating cross-python.sh"
 sed "s|@WASI_BUILD@|$WASI_BUILD|g" "$HERE/cross-python.sh.in" > "$WASI_BUILD/cross-python.sh"
 chmod +x "$WASI_BUILD/cross-python.sh"
 
-# --- shared build venv with cython (numpy meson + pandas cythonize both need it) ---
-if [ ! -x "$WASI_BUILD/build-venv/bin/cython" ]; then
-  echo ">>> creating build venv with cython"
+# --- shared build venv (cython/meson/ninja/pythran/cmake/pybind11) ---
+# numpy's vendored meson + pandas cythonize + skimage meson + opencv cmake all
+# resolve tools from here; the venv must be complete for every stage. The pip
+# install re-runs every time (no-op when satisfied) so stale cached venvs heal.
+if [ ! -x "$WASI_BUILD/build-venv/bin/python" ]; then
+  echo ">>> creating build venv"
   "$WASI_BUILD/cpython-host/install/bin/python3.14" -m venv --without-pip "$WASI_BUILD/build-venv"
   curl -fsSL https://bootstrap.pypa.io/get-pip.py -o "$WASI_BUILD/get-pip.py"
   "$WASI_BUILD/build-venv/bin/python" "$WASI_BUILD/get-pip.py"
-  "$WASI_BUILD/build-venv/bin/pip" install -q "cython>=3.0.6" setuptools ninja
 else
   echo ">>> build venv present"
 fi
+"$WASI_BUILD/build-venv/bin/pip" install -q \
+    "cython>=3.0.6" setuptools ninja meson pythran cmake pybind11 cppy
 
 echo "=== Stage 1 done ==="
 "$WASI_BUILD/cross-python.sh" -c "import sysconfig; print('cross-python include:', sysconfig.get_path('include'), '| SIZEOF_VOID_P:', sysconfig.get_config_var('SIZEOF_VOID_P'))"

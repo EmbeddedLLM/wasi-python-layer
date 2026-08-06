@@ -28,6 +28,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export WASI_BUILD="${WASI_BUILD:-/tmp/wasi-build}"
 SITE="${SITE:-$WASI_BUILD/extras-site}"
 WASI_SDK="$WASI_BUILD/wasi-sdk"
+export PATH="$WASI_BUILD/build-venv/bin:$PATH"   # cmake, ninja (system cmake absent in bare containers)
 CROSS_PREFIX="$WASI_BUILD/cpython-wasi/install"
 CROSS_PY="$WASI_BUILD/cross-python.sh"
 NB="$WASI_BUILD/numpy251-install/usr/local/lib/python3.14/site-packages"
@@ -99,6 +100,12 @@ patched = 0
 for r in roots:
     for p in Path(r).rglob("*"):
         if p.suffix not in (".cpp", ".hpp", ".h") or any(sk in str(p) for sk in skip):
+            continue
+        if p.name == "ovx.cpp":
+            # Hand-patched below — the stripper's depth tracking confounds
+            # its single-line catch bodies and leaves unbalanced ifdefs
+            # (cold-build regression caught 2026-08-06: unterminated
+            # #ifdef HAVE_OPENVX on a virgin 4.12.0 checkout).
             continue
         lines = p.read_text(errors="ignore").split("\n")
         if any(stmt.match(l) for l in lines):

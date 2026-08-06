@@ -30,6 +30,55 @@ https://github.com/EmbeddedLLM/wasi-python-layer/releases/download/<tag>/
   hosts. Host-arch artifacts (the runtime factory/preinit snapshot) are built
   at provision time by the consumer, never shipped here.
 
+## What's in the layer
+
+The tarball is the guest's `site-packages` for CPython **3.14 / wasm32-wasip2**
+(extension suffix `.cpython-314-wasm32-wasi.so`; the tree itself is
+host-arch-independent). Contents:
+
+**Scientific stack:** numpy 2.5.1 (meson) · pandas 3.0.3 (bypass) · matplotlib
+3.11.1 (Agg backend) + contourpy, kiwisolver, cycler, fonttools, packaging,
+pyparsing, python-dateutil, pytz, tzdata · scikit-image (51 Cython modules) ·
+opencv 4.12.0 (`cv2`: core, imgproc, imgcodecs, objdetect, features2d, calib3d,
+flann + python3 module)
+
+**I/O & parsing:** Pillow · soundfile (libsndfile + `_soundfile_native`) ·
+lxml 6.0.0 (etree, objectify, sax) · beautifulsoup4 4.15.0 + soupsieve +
+typing_extensions · regex · pyyaml 6.0.3 (pure fallback) · ruamel.yaml ·
+simplejson · audioop (audioop-lts)
+
+**Serialization / tokens:** orjson 3.11.9 (Rust, wasm32-wasip1 cdylib) ·
+tiktoken (Rust + baked-in vocab data)
+
+**Symbolic:** sympy 1.14.0 + mpmath
+
+**Guest environment:** stdlib supplements (missing codecs, mmap stub) ·
+`sitecustomize.py` (sets `MPLCONFIGDIR`, extends `encodings.__path__`) ·
+`.mpl-config` (matplotlib cache dir — must ship in the tree, the mount is
+read-only)
+
+The guest import gate (`scripts/verify-imports.py`) asserts the full set
+pre-imports at factory build and imports at runtime.
+
+## Limitations
+
+- **httpx/requests are NOT in the layer.** They are consumer-provisioned pure
+  wheels (vllm-responses `PURE_PYTHON_PIP_SPECS`), bundled into the consumer's
+  factory so the consumer owns the network-client contract and versions.
+- **networkx is excluded** — it needs `bz2`/`_bz2`, absent from the wasm build.
+- **imageio ships in the tree and imports from the mount, but is not
+  gate-asserted** (skimage.io is out of scope).
+- **pyyaml is pure-Python fallback only** — no `_yaml` C extension (documented
+  upgrade path: libyaml + `_yaml.c` via the lxml pattern).
+- **matplotlib: Agg backend only** — no interactive backends; the font cache is
+  read-only (in-memory font scan; cache *writes* are best-effort and may warn).
+- **`/site-packages` is mounted read-only** — packages cannot write into their
+  own tree; use `/tmp` (writable at runtime) for scratch files.
+- **No implicit networking** — egress requires the consumer's proxy/network
+  configuration; imports never open sockets.
+- **Python ABI is fixed at cp314** — the tarball name carries it
+  (`cp314-wasm32-wasip2`); a CPython bump is a new artifact, not an update.
+
 ## Building
 
 From scratch (~60 min, ~6 GB):
