@@ -40,14 +40,25 @@ mkdir -p "$SITE/kiwisolver"
 cp "$MPL_BUILD/kiwisolver-1.4.8/py/kiwisolver/"*.py "$SITE/kiwisolver/"
 cp "$MPL_BUILD/ext/kiwisolver.so" "$SITE/kiwisolver/_cext.so"
 
-# --- Pillow (from earlier pipeline) ---
-echo ">>> Copying Pillow..."
+# --- Pillow (built by build/pillow/build.sh — the old standalone flow, now
+# wired in: fresh trees have no pillow-out, and matplotlib.colors needs PIL) ---
+echo ">>> Pillow..."
+if [ ! -d "$WASI_BUILD/pillow-out/PIL" ]; then
+    echo ">>> Building Pillow 9.5.0 (zlib + libjpeg-turbo + Pillow)..."
+    mkdir -p "$WASI_BUILD/pillow"
+    ( cd "$WASI_BUILD/pillow" && \
+      CROSS_PREFIX="$WASI_BUILD/cpython-wasi/install" \
+      WASI_SDK_PATH="$WASI_BUILD/wasi-sdk" \
+      HOST_PYTHON="$WASI_BUILD/cpython-host/install/bin/python3.14" \
+      bash "$HERE/../pillow/build.sh" )
+    mkdir -p "$WASI_BUILD/pillow-out"
+    cp -a "$WASI_BUILD/pillow/Pillow-9.5.0/build/pillow-9.5.0/PIL" "$WASI_BUILD/pillow-out/" 2>/dev/null || true
+fi
 if [ -d "$WASI_BUILD/pillow-out/PIL" ]; then
     cp -r "$WASI_BUILD/pillow-out/PIL" "$SITE/PIL"
-elif [ -d "$WASI_BUILD/combined-site/PIL" ]; then
-    cp -r "$WASI_BUILD/combined-site/PIL" "$SITE/PIL"
 else
-    echo "  WARNING: no wasm Pillow found; matplotlib.colors will fail on PIL import"
+    echo "ERROR: no wasm Pillow (pillow-out/PIL); matplotlib.colors imports PIL" >&2
+    exit 1
 fi
 
 # --- numpy (from pandas pipeline) ---
