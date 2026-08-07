@@ -32,7 +32,7 @@ IMPORT_CODE = (
 )
 
 # The gate must build the factory the way consumers do — with the contract set
-# pre-imported (packages.py DEFAULT_IMPORTS). Pre-importing matplotlib at
+# pre-imported (consumers pre-import the same set into their factory). Pre-importing matplotlib at
 # factory-build time populates its font cache into the site-packages tree
 # (pre-init mount is writable; the runtime mount is read-only, so a fresh tree
 # with no cache fails matplotlib import at runtime otherwise — cold-build
