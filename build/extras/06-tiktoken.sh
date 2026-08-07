@@ -103,11 +103,21 @@ p = Path("$SITE/tiktoken_ext/openai_public.py")
 src = p.read_text()
 for name in ("r50k_base", "p50k_base", "cl100k_base", "o200k_base"):
     old = f'"https://openaipublic.blob.core.windows.net/encodings/{name}.tiktoken"'
-    new = f'"/site-packages/tiktoken/data/{name}.tiktoken"'
+    new = f'_os.path.join(_TT_DATA, "{name}.tiktoken")'
     assert old in src, f"expected {old} in openai_public.py"
     src = src.replace(old, new)
+# Data dir computed relative to this module at runtime, so the layer works under
+# ANY site-packages mount prefix (/site-packages for the factory/sandbox path,
+# /site-packages-0 for the PythonExecutor session path — v8-kopi plan §13.3).
+helper = (
+    'import os as _os\n'
+    '_TT_DATA = _os.path.join(\n'
+    '    _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "tiktoken", "data")\n'
+)
+assert not src.startswith("import os as _os"), "already patched?"
+src = helper + src
 p.write_text(src)
-print("  patched", src.count("/site-packages/tiktoken/data"), "URLs")
+print("  patched", src.count("_TT_DATA"), "URLs -> self-locating data dir")
 EOF
 
 echo ">>> [extras/06] registry.py plugin-scan fallback (wasm pkgutil blind spot)..."

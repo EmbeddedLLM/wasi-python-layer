@@ -20,7 +20,10 @@ _mpl_dir = "/tmp/mpl-config"
 try:
     os.makedirs(_mpl_dir, exist_ok=True)
 except OSError:
-    _mpl_dir = "/site-packages/.mpl-config"
+    # Relative to this module, so it works under ANY site-packages mount prefix
+    # (/site-packages for the factory/sandbox path, /site-packages-0 for the
+    # PythonExecutor session path — v8-kopi plan §13.3).
+    _mpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".mpl-config")
 os.environ["MPLCONFIGDIR"] = _mpl_dir
 
 # Extend encodings search path for missing codecs

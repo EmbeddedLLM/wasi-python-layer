@@ -78,7 +78,10 @@ pre-imports at factory build and imports at runtime.
 - **matplotlib: Agg backend only** — no interactive backends; the font cache is
   read-only (in-memory font scan; cache *writes* are best-effort and may warn).
 - **`/site-packages` is mounted read-only** — packages cannot write into their
-  own tree; use `/tmp` (writable at runtime) for scratch files.
+  own tree; use `/tmp` (writable at runtime) for scratch files. Baked absolute
+  paths (tiktoken data, matplotlib config dir) resolve relative to the module
+  location, so the layer works under any site-packages mount prefix
+  (`/site-packages`, `/site-packages-0`, …).
 - **No implicit networking** — egress requires the consumer's proxy/network
   configuration; imports never open sockets.
 - **Python ABI is fixed at cp314** — the tarball name carries it
