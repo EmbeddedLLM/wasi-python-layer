@@ -53,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           .venv/bin/python scripts/verify-imports.py
-        timeout-minutes: 10
+          .venv/bin/python scripts/verify-functionality.py
+        timeout-minutes: 15
         env:
           WASI_BUILD: /tmp/wasi-build
