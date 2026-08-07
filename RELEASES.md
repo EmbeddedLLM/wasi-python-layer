@@ -6,4 +6,4 @@ Populate after each release build (sha printed by `build-release.yml` /
 
 | Tag | SHA256 | Built by |
 |-----|--------|----------|
-| v1.0.0 | `6af5732e0d2bb310055c3017910c684436d6e5792ccbf6e5b4e5412f1996ce2b` | hosted build-release.yml (2026-08-06, run 31127412893) |
+| v1.0.0 | `a3a851ecd95393a84134f76053296500c3312244198916219260e867baf8ede8` | hosted build-release.yml (2026-08-07, run 31183584176; self-locating baked paths) |
