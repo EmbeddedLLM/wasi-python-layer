@@ -37,8 +37,8 @@ jobs:
           set -euo pipefail
           python -m venv .venv
           # pyeryx (the eryx pyo3 layer) from the org release wheel. This is the
-          # runtime-rev pin for the gate: bump it with the consumers' runtime pin
-          # (vllm-responses fetch-eryx-runtime.sh / v8-kopi plan).
+          # runtime-rev pin for the gate: bump it together with your consumers'
+          # runtime pin when they adopt a newer engine.
           .venv/bin/pip install -q "pyeryx @ https://github.com/EmbeddedLLM/eryx/releases/download/v0.5.0-embeddedllm.4/pyeryx-0.5.0-cp312-abi3-manylinux_2_39_x86_64.whl"
 
       - name: From-scratch build (wasm_setup.sh)

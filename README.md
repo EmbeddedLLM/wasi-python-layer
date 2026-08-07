@@ -63,8 +63,8 @@ pre-imports at factory build and imports at runtime.
 ## Limitations
 
 - **httpx/requests are NOT in the layer.** They are consumer-provisioned pure
-  wheels (vllm-responses `PURE_PYTHON_PIP_SPECS`), bundled into the consumer's
-  factory so the consumer owns the network-client contract and versions.
+  wheels: consumers pin and bundle their own network-client versions into
+  their factory, so they own the network contract and versions.
 - **networkx is excluded** — it needs `bz2`/`_bz2`, absent from the wasm build.
 - **scikit-image is scipy-free only at the top level** — `util`, `draw`,
   `exposure`, `_shared` work; `color`, `io`, and the scipy-dependent submodules
