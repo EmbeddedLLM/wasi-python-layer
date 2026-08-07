@@ -4,8 +4,9 @@
 # scipy is NOT available for wasm32-wasip2 (BLAS/LAPACK mandatory in scipy's
 # meson; OpenBLAS for wasi needs a Fortran-free C_LAPACK build + f2c — multi-week
 # port, see design_docs/code_interpreter_wasm_packages_build.md Checkpoint 6).
-# skimage's top-level import is scipy-free (lazy_loader) and the following
-# submodules work WITHOUT scipy: _shared, util, color, draw, exposure, io
+# skimage's top-level import is scipy-free (lazy_loader). Verified working
+# WITHOUT scipy (functional sweep, 2026-08-06): _shared, util, draw,
+# exposure. NOT working: color (colorconv needs scipy.linalg), io, and the
 # (io needs the pure deps networkx/imageio/tifffile/lazy_loader). The
 # scipy-dependent submodules (filters, morphology, measure, segmentation,
 # transform, restoration, graph, metrics, feature-partial) raise ImportError on

@@ -66,6 +66,11 @@ pre-imports at factory build and imports at runtime.
   wheels (vllm-responses `PURE_PYTHON_PIP_SPECS`), bundled into the consumer's
   factory so the consumer owns the network-client contract and versions.
 - **networkx is excluded** — it needs `bz2`/`_bz2`, absent from the wasm build.
+- **scikit-image is scipy-free only at the top level** — `util`, `draw`,
+  `exposure`, `_shared` work; `color`, `io`, and the scipy-dependent submodules
+  (`transform`, `restoration`, `graph`, …) raise on use because scipy is not
+  buildable for wasm32-wasip2 (BLAS/LAPACK). The functional sweep
+  (`scripts/verify-functionality.py`) pins the verified set.
 - **imageio ships in the tree and imports from the mount, but is not
   gate-asserted** (skimage.io is out of scope).
 - **pyyaml is pure-Python fallback only** — no `_yaml` C extension (documented
