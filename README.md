@@ -42,7 +42,10 @@ pyparsing, python-dateutil, pytz, tzdata · scikit-image (51 Cython modules) ·
 opencv 4.12.0 (`cv2`: core, imgproc, imgcodecs, objdetect, features2d, calib3d,
 flann + python3 module)
 
-**I/O & parsing:** Pillow · soundfile (libsndfile + `_soundfile_native`) ·
+**I/O & parsing:** Pillow 9.5.0 (T1 image formats: webp decode/save/animation,
+tiff, jpeg2000, jpeg, png, freetype2, imagequant; webp + imaging METH_NOARGS
+arity fixes for wasm) · wasi_heif (HEIC/HEIF decode via libheif+libde265,
+registered as a PIL opener) · soundfile (libsndfile + `_soundfile_native`) ·
 lxml 6.0.0 (etree, objectify, sax) · beautifulsoup4 4.15.0 + soupsieve +
 typing_extensions · regex · pyyaml 6.0.3 (pure fallback) · ruamel.yaml ·
 simplejson · audioop (audioop-lts)

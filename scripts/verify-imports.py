@@ -44,6 +44,7 @@ PRE_IMPORTS: tuple[str, ...] = (
     "matplotlib.backends.backend_agg",
     "contourpy",
     "PIL",
+    "wasi_heif",
     "soundfile",
     "lxml.etree",
     "bs4",

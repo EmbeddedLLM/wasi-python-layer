@@ -61,6 +61,16 @@ else
     exit 1
 fi
 
+# --- wasi_heif (HEIC/HEIF decode; built by build/pillow/build.sh into
+#     $WASI_BUILD/heif-py: _wasi_heif C extension + wasi_heif PIL plugin) ---
+if [ -f "$WASI_BUILD/heif-py/wasi_heif.py" ]; then
+    echo ">>> Copying wasi_heif (HEIC)..."
+    cp -r "$WASI_BUILD/heif-py"/_wasi_heif*.so "$SITE/"
+    cp "$WASI_BUILD/heif-py/wasi_heif.py" "$SITE/"
+else
+    echo "WARNING: no heif-py staging (wasi_heif) — HEIC decode unavailable" >&2
+fi
+
 # --- numpy (from pandas pipeline) ---
 echo ">>> Copying numpy..."
 cp -r "$WASI_BUILD/numpy251-install/usr/local/lib/python3.14/site-packages/numpy" "$SITE/"

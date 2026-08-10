@@ -39,3 +39,27 @@ for _codec in ("utf_16_be", "utf_16_le", "utf_32_be", "utf_32_le", "latin_1"):
     except ImportError:
         pass
 
+# HEIC/HEIF: register the _wasi_heif PIL opener so Image.open() transparently
+# decodes .heic/.heif (Pillow core has no HEIF support; the wasm layer ships
+# wasi_heif — a libheif-based decode-only plugin, see build/pillow/_wasi_heif.c).
+#
+# WIZER PRE-INIT LIMITATION (Trap P12): ANY import of a dylink extension module
+# during the snapshot phase traps with "indirect call type mismatch" at
+# _PyImport_FindSharedFuncptr — the wizer pre-init context cannot resolve
+# dynamic imports (verified 2026-08-10: import PIL._imaging / _wasi_heif at
+# pre-init traps even for the OLD working .so files; import PIL (pure Python
+# __init__) is fine). A wasm trap is NOT catchable by `except Exception`, so a
+# naive `import wasi_heif` here killed the whole factory snapshot. sitecustomize
+# re-runs at runtime with /tmp mounted, so defer extension imports to that run:
+# the /tmp makedirs above fails ONLY during pre-init (no volumes) — reuse it.
+try:
+    os.makedirs("/tmp/mpl-config-deferred", exist_ok=True)
+    # runtime run: extension imports are safe here
+    import wasi_heif
+
+    wasi_heif.register_heif_opener()
+except OSError:
+    pass  # pre-init snapshot: defer to the runtime sitecustomize run
+except Exception:
+    pass
+
