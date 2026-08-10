@@ -1,0 +1,45 @@
+# -*- Makefile -*-
+# make.inc for building CLAPACK 3.2.1 libf2c with wasi-sdk-27 (wasm32-wasip2).
+# Adapted from pyodide's libf2c recipe extras/make.inc (emscripten) — the
+# wasm-specific bits are the target flags + ARCH/RANLIB/NODE indirection.
+# See design_docs/code_interpreter_wasm_scipy_build.md Stage 2.
+SHELL = /usr/bin/env sh
+PLAT = _WASI
+
+# CC/AR/RANLIB/WASI_SDK_PATH/NODE/ARITH_RUNNER are exported by 01-libf2c.sh;
+# make sees exported env vars as make variables.
+CC = $(WASI_SDK_PATH)/bin/clang
+AR = $(WASI_SDK_PATH)/bin/llvm-ar
+RANLIB = $(WASI_SDK_PATH)/bin/llvm-ranlib
+
+# Main build targets wasm32-wasip2 (the shipped libf2c.a).
+CFLAGS = -O2 --target=wasm32-wasip2 --sysroot=$(WASI_SDK_PATH)/share/wasi-sysroot \
+	 -I$(TOPDIR)/INCLUDE -fPIC -DNO_BLAS_WRAP
+NOOPT = -O0 --target=wasm32-wasip2 --sysroot=$(WASI_SDK_PATH)/share/wasi-sysroot \
+	-I$(TOPDIR)/INCLUDE -fPIC
+DRVCFLAGS = $(CFLAGS)
+F2CCFLAGS = $(CFLAGS)
+LDFLAGS = -O2
+LOADER = $(CC)
+LOADOPTS =
+
+# arith.h generation: arithchk.c is compiled as a wasm32-wasip1 module (Node's
+# WASI is preview1) and executed by $(NODE) $(ARITH_RUNNER). The wasip1 helper
+# is codegen-only — never shipped.
+ARITH_CC = $(WASI_SDK_PATH)/bin/clang
+ARITH_CFLAGS = -O2 --target=wasm32-wasip1 --sysroot=$(WASI_SDK_PATH)/share/wasi-sysroot
+NODE = node
+ARITH_RUNNER = /nonexistent  # set by 01-libf2c.sh
+
+TIMER = INT_CPU_TIME
+
+ARCH = $(AR)
+ARCHFLAGS = cr
+
+BLASLIB = ../../blas$(PLAT).a
+XBLASLIB =
+LAPACKLIB = lapack$(PLAT).a
+F2CLIB = ../../F2CLIBS/libf2c.a
+TMGLIB = tmglib$(PLAT).a
+EIGSRCLIB = eigsrc$(PLAT).a
+LINSRCLIB = linsrc$(PLAT).a

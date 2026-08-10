@@ -1,0 +1,26 @@
+From: wasi-python-layer
+Date: 2026-08-10
+Subject: [PATCH] drop signal-dependent objects from libf2c (WASI has no signals)
+
+wasi-libc's signal.h hard-errors without the EH proposal (cf. Pillow Trap P4,
+setjmp class). main.c / signal_.c / sig_die.c / s_paus.c are the f2c runtime's
+standalone-program signal machinery (SIGFPE trapping, pause) - scipy links
+only the arithmetic/string/complex runtime (pow_*, s_*, c_*, z_*, r_*, d_*),
+never main/signal/pause. Disposition per plan Stage 11 failure class A:
+'feature unnecessary -> disable'. Documented in the Stage 2 worklog.
+---
+--- a/F2CLIBS/libf2c/Makefile
++++ b/F2CLIBS/libf2c/Makefile
+@@ -25,9 +25,9 @@
+ ## If your system does not have the ld command, comment out
+ ## or remove both the ld and mv lines above.
+ 
+-MISC =	f77vers.o i77vers.o main.o s_rnge.o abort_.o exit_.o getarg_.o iargc_.o\
+-	getenv_.o signal_.o s_stop.o s_paus.o system_.o cabs.o ctype.o\
+-	derf_.o derfc_.o erf_.o erfc_.o sig_die.o uninit.o
++MISC =	f77vers.o i77vers.o s_rnge.o abort_.o exit_.o getarg_.o iargc_.o\
++	getenv_.o s_stop.o system_.o cabs.o ctype.o\
++	derf_.o derfc_.o erf_.o erfc_.o uninit.o
+ POW =	pow_ci.o pow_dd.o pow_di.o pow_hh.o pow_ii.o pow_ri.o pow_zi.o pow_zz.o
+ CX =	c_cos.o c_div.o c_exp.o c_log.o c_sin.o c_sqrt.o
+ DCX =	z_cos.o z_div.o z_exp.o z_log.o z_sin.o z_sqrt.o

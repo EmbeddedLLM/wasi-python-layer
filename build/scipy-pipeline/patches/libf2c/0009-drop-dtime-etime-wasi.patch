@@ -1,0 +1,22 @@
+From: wasi-python-layer
+Date: 2026-08-10
+Subject: [PATCH] drop dtime_/etime_ (f2c timing intrinsics) — WASI has no process clocks
+
+dtime_.c / etime_.c call times() (sys/times.h). wasi-libc hard-errors
+without -D_WASI_EMULATED_PROCESS_CLOCKS, whose wall-clock semantics differ
+from process CPU time. DTIME/ETIME are Fortran timing intrinsics — scipy
+never references them (CPython's time module handles timing). Dropped per
+plan Stage 11 failure class A; re-add with the emulation flag only if a
+consumer ever needs them.
+---
+--- a/F2CLIBS/libf2c/Makefile
++++ b/F2CLIBS/libf2c/Makefile
+@@ -51,7 +51,7 @@
+ 	open.o rdfmt.o rewind.o rsfe.o rsli.o rsne.o sfe.o sue.o\
+ 	typesize.o uio.o util.o wref.o wrtfmt.o wsfe.o wsle.o wsne.o xwsne.o
+ QINT =	pow_qq.o qbitbits.o qbitshft.o ftell64_.o
+-TIME =	dtime_.o etime_.o
++TIME =	# dtime_.o etime_.o dropped: use times() (WASI has no process clocks; see 0009)
+ 
+ # If you get an error compiling dtime_.c or etime_.c, try adding
+ # -DUSE_CLOCK to the CFLAGS assignment above; if that does not work,
