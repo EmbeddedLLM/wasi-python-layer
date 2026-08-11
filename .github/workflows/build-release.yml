@@ -110,6 +110,23 @@ jobs:
             python3
         timeout-minutes: 20
 
+      - name: Build scipy 1.18.0 (wasm)
+        run: |
+          set -euo pipefail
+          export WASI_BUILD=/tmp/wasi-build
+          # libf2c + OpenBLAS substrate, scipy cross build, then append into
+          # mpl-site (append-only — 11-assemble.sh never recreates the site).
+          # Requires pyeryx >= v0.5.0-instance-cap.1 at FACTORY-BUILD time only;
+          # the tarball itself is runtime-agnostic.
+          bash build/scipy-pipeline/01-libf2c.sh
+          bash build/scipy-pipeline/02-openblas.sh
+          bash build/scipy-pipeline/07-scipy-prep.sh
+          bash build/scipy-pipeline/08-scipy-cross.sh
+          bash build/scipy-pipeline/09-scipy-build.sh
+          bash build/scipy-pipeline/11-assemble.sh \
+            /tmp/wasi-build/matplotlib-build/mpl-site
+        timeout-minutes: 40
+
       - name: Package site-packages tarball
         run: |
           set -euo pipefail

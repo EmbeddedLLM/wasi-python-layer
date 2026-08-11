@@ -1,0 +1,14 @@
+diff --git a/driver/others/memory.c b/driver/others/memory.c
+--- a/driver/others/memory.c
++++ b/driver/others/memory.c
+@@ -1719,8 +1719,8 @@
+ #if (!defined(OS_WINDOWS) || defined(OS_CYGWIN_NT)) && !defined(OS_EMBEDDED)
+ #include <sys/mman.h>
+ #ifndef NO_SYSV_IPC
+ #include <sys/shm.h>
++#include <sys/ipc.h>
+ #endif
+-#include <sys/ipc.h>
+ #endif
+ 
+ #include <sys/types.h>

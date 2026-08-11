@@ -15,10 +15,22 @@ FT_INC="$MPL_BUILD/freetype-install/include/freetype2"
 STUBS="$MPL_BUILD/wasi_stubs.o"
 FAKE="-isystem $MPL_BUILD/fake-headers"
 
-# Apply source patches (idempotent)
+# Apply source patches (idempotent). Each patch declares its own arg
+# contract: the mpl patches take (mpl-src, mpl-build); the kiwisolver patch
+# takes the kiwisolver source dir (its py/src/*.cpp live under the kiwisolver
+# tree, NOT matplotlib's). Passing mpl-src to it made CI fail with
+# "sed: can't read .../matplotlib-3.11.1/py/src/constraint.cpp" (2026-08-10).
 echo ">>> Applying patches..."
 for patch in "$HERE"/patches/*.sh; do
-    [ -f "$patch" ] && bash "$patch" "$MPL_SRC" "$MPL_BUILD"
+    [ -f "$patch" ] || continue
+    case "$(basename "$patch")" in
+        patch-kiwisolver-methnoargs.sh)
+            bash "$patch" "$MPL_BUILD/kiwisolver-1.4.8"
+            ;;
+        *)
+            bash "$patch" "$MPL_SRC" "$MPL_BUILD"
+            ;;
+    esac
 done
 
 CF="--target=wasm32-wasip2 --sysroot=$WASI_SDK/share/wasi-sysroot -std=c++17 -O2 -fPIC -fvisibility=hidden $FAKE"
