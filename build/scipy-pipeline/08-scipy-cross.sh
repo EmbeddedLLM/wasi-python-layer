@@ -41,7 +41,7 @@ export PKG_CONFIG_LIBDIR="$DEPS/lib/pkgconfig:$NUPY/numpy/_core/lib/pkgconfig"
 MESON_ROOT="$WASI_BUILD/build-venv/lib/python3.14/site-packages"
 if [ -f "$MESON_ROOT/mesonbuild/compilers/mixins/clike.py" ] \
    && ! grep -q "_target_cpu != 'wasm32'" "$MESON_ROOT/mesonbuild/compilers/mixins/clike.py"; then
-  bash "$HERE/../../pandas-pipeline/patches/patch-meson-clike.sh" "$MESON_ROOT"
+  bash "$HERE/../pandas-pipeline/patches/patch-meson-clike.sh" "$MESON_ROOT"
 fi
 
 # ── scipy source patches (ctypes guards, cython_lapack ABI, fft/stats
