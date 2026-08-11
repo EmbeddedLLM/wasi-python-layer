@@ -321,14 +321,14 @@ PYEOF
 from pathlib import Path
 
 fixes = {
-    "src/_webp.c": {
+    "Pillow-9.5.0/src/_webp.c": {
         "WebPDecoderVersion_wrapper() {": "WebPDecoderVersion_wrapper(PyObject *self, PyObject *unused) {",
         "WebPDecoderBuggyAlpha_wrapper() {": "WebPDecoderBuggyAlpha_wrapper(PyObject *self, PyObject *unused) {",
         "_anim_decoder_get_info(PyObject *self) {": "_anim_decoder_get_info(PyObject *self, PyObject *unused) {",
         "_anim_decoder_get_next(PyObject *self) {": "_anim_decoder_get_next(PyObject *self, PyObject *unused) {",
         "_anim_decoder_reset(PyObject *self) {": "_anim_decoder_reset(PyObject *self, PyObject *unused) {",
     },
-    "src/_imaging.c": {
+    "Pillow-9.5.0/src/_imaging.c": {
         "_isblock(ImagingObject *self) {": "_isblock(ImagingObject *self, PyObject *unused) {",
         "_getbbox(ImagingObject *self) {": "_getbbox(ImagingObject *self, PyObject *unused) {",
         "_getextrema(ImagingObject *self) {": "_getextrema(ImagingObject *self, PyObject *unused) {",
@@ -337,11 +337,11 @@ fixes = {
         "_getpalettemode(ImagingObject *self) {": "_getpalettemode(ImagingObject *self, PyObject *unused) {",
         "_chop_invert(ImagingObject *self) {": "_chop_invert(ImagingObject *self, PyObject *unused) {",
     },
-    "src/_imagingft.c": {
+    "Pillow-9.5.0/src/_imagingft.c": {
         "font_getvarnames(FontObject *self) {": "font_getvarnames(FontObject *self, PyObject *unused) {",
         "font_getvaraxes(FontObject *self) {": "font_getvaraxes(FontObject *self, PyObject *unused) {",
     },
-    "src/encode.c": {
+    "Pillow-9.5.0/src/encode.c": {
         "_encode_to_pyfd(ImagingEncoderObject *encoder) {": "_encode_to_pyfd(ImagingEncoderObject *encoder, PyObject *unused) {",
     },
 }
