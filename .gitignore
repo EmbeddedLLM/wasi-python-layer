@@ -2,3 +2,4 @@
 .venv/
 dist-wasm/
 __pycache__/
+dist/
