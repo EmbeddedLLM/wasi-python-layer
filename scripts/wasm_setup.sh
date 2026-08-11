@@ -32,7 +32,7 @@ echo ""
 # 1: pandas pipeline (wasi-sdk + wasm CPython 3.14 + numpy 2.5.1 + pandas 3.0.3,
 #    assembled into $WASI_BUILD/combined-site)
 if [ ! -d "$WASI_BUILD/combined-site/pandas" ]; then
-    echo ">>> [1/4] pandas pipeline (toolchain + numpy + pandas)..."
+    echo ">>> [1/5] pandas pipeline (toolchain + numpy + pandas)..."
     bash "$REPO/build/pandas-pipeline/build-all.sh"
 else
     echo ">>> [skip] pandas pipeline"
@@ -40,7 +40,7 @@ fi
 
 # 2: matplotlib + deps (assembles numpy + pandas from combined-site into BUILD_SITE)
 if [ ! -d "$BUILD_SITE/matplotlib" ]; then
-    echo ">>> [2/4] matplotlib pipeline..."
+    echo ">>> [2/5] matplotlib pipeline..."
     bash "$REPO/build/matplotlib-pipeline/build-all.sh"
 else
     echo ">>> [skip] matplotlib"
@@ -48,7 +48,7 @@ fi
 
 # 3: soundfile (libsndfile + _soundfile_native, assembles into BUILD_SITE)
 if [ ! -d "$BUILD_SITE/soundfile" ]; then
-    echo ">>> [3/4] soundfile..."
+    echo ">>> [3/5] soundfile..."
     bash "$REPO/build/soundfile-pipeline/build-all.sh"
 else
     echo ">>> [skip] soundfile"

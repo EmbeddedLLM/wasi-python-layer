@@ -38,3 +38,15 @@ rm -rf "$INSTALL"
 PATH="$WASI_BUILD/build-venv/bin:$PATH" meson install -C build --destdir "$INSTALL" \
   > "$WASI_BUILD/scipy-build/meson-install.log" 2>&1
 echo "[scipy-build] INSTALL OK: $INSTALL/usr/local/lib/python3.14/site-packages/scipy"
+
+# ── artifact assertion (reproducibility gate) ───────────────────────────────
+# The full build produces exactly 102 wasm32-wasip2 extensions (observed on
+# every clean rebuild since 2026-08-10). A count change means the module set
+# drifted (new/merged/removed extensions) — the 246-extension layer cap
+# headroom and the runtime gates both depend on it.
+SO_COUNT="$(find "$INSTALL" -name '*.so' | wc -l)"
+if [ "$SO_COUNT" -ne 102 ]; then
+  echo "[scipy-build] FAIL: expected 102 .so, got $SO_COUNT — module set drifted" >&2
+  exit 1
+fi
+echo "[scipy-build] assertion OK: 102 .so extensions"
