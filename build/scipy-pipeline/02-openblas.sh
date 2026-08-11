@@ -174,10 +174,12 @@ OBJ_COUNT=$("$WASI_SDK_PATH/bin/llvm-ar" t "$DEPS/lib/libopenblas.a" | wc -l)
 echo "  objects: $OBJ_COUNT"
 if [ "$OBJ_COUNT" -lt 100 ]; then echo "  [FAIL] too few objects" >&2; exit 1; fi
 UNDEF=$("$WASI_SDK_PATH/bin/llvm-nm" -u "$DEPS/lib/libopenblas.a" 2>/dev/null | sort -u)
-if echo "$UNDEF" | grep -qiE "pthread|dlopen|fork|signal"; then
-  echo "  [FAIL] unwanted imports:" >&2
-  echo "$UNDEF" | grep -iE "pthread|dlopen|fork|signal" >&2
-  exit 1
-fi
+case "$UNDEF" in
+  *pthread*|*dlopen*|*fork*|*signal*)
+    echo "  [FAIL] unwanted imports:" >&2
+    echo "$UNDEF" >&2
+    exit 1
+    ;;
+esac
 echo "  [ok] no pthread/dlopen/fork/signal imports"
 echo "[openblas] DONE: $DEPS/lib/libopenblas.a ($(du -h "$DEPS/lib/libopenblas.a" | cut -f1))"
