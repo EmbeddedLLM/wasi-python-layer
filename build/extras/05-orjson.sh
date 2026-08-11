@@ -24,7 +24,7 @@ mkdir -p "$BUILD"
 
 echo ">>> [extras/05] Fetching orjson $OJ_VERSION sdist..."
 OJ_URL="$(curl -s "https://pypi.org/pypi/orjson/$OJ_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$OJ_URL" ] || { echo "ERROR: orjson sdist not found"; exit 1; }
 if [ ! -d "$BUILD/orjson-$OJ_VERSION" ]; then
     curl -sL -o "$BUILD/orjson-$OJ_VERSION.tar.gz" "$OJ_URL"
@@ -58,7 +58,8 @@ EOF
 # 'can't find crate for std' — cold CI regression caught 2026-08-06). Must come
 # BEFORE the env prefix below — a dangling backslash-continuation would drop
 # the env vars.
-if ! rustup target list --installed --toolchain 1.95 2>/dev/null | grep -q "^wasm32-wasip1$"; then
+RUSTUP_TARGETS="$(rustup target list --installed --toolchain 1.95 2>/dev/null || true)"
+if ! case "$RUSTUP_TARGETS" in *wasm32-wasip1*) true ;; *) false ;; esac; then
     echo ">>> [extras/05] installing wasm32-wasip1 target (toolchain 1.95)..."
     rustup target add --toolchain 1.95 wasm32-wasip1
 fi

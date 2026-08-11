@@ -74,7 +74,6 @@ cp -f F2CLIBS/libf2c.a "$DEPS/lib/libf2c.a"
 
 # ── Stage 2 validation ─────────────────────────────────────────────────────
 echo "[libf2c] validating..."
-OBJ="$("$WASI_SDK_PATH/bin/llvm-ar" t "$DEPS/lib/libf2c.a" | head -1)"
 mkdir -p /tmp/f2c-check && ( cd /tmp/f2c-check && "$WASI_SDK_PATH/bin/llvm-ar" x "$DEPS/lib/libf2c.a" && file ./*.o 2>/dev/null | head -2 || true )
 # grep -q closes the pipe on first match -> the producer (llvm-nm) dies on
 # SIGPIPE and pipefail turns the pipeline into exit 141 -> false FAIL.
