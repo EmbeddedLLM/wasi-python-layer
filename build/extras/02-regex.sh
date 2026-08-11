@@ -24,7 +24,7 @@ mkdir -p "$BUILD" "$SITE/regex"
 
 echo ">>> [extras/02] Fetching regex $RX_VERSION sdist..."
 RX_URL="$(curl -s "https://pypi.org/pypi/regex/$RX_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$RX_URL" ] || { echo "ERROR: regex sdist not found"; exit 1; }
 if [ ! -d "$BUILD/regex-$RX_VERSION" ]; then
     curl -sL -o "$BUILD/regex-$RX_VERSION.tar.gz" "$RX_URL"

@@ -18,7 +18,7 @@ mkdir -p "$BUILD"
 
 echo ">>> [extras/03] Fetching audioop-lts $AO_VERSION sdist..."
 AO_URL="$(curl -s "https://pypi.org/pypi/audioop-lts/$AO_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$AO_URL" ] || { echo "ERROR: audioop-lts sdist not found"; exit 1; }
 if [ ! -d "$BUILD/audioop_lts-$AO_VERSION" ]; then
     curl -sL -o "$BUILD/audioop_lts-$AO_VERSION.tar.gz" "$AO_URL"
