@@ -31,7 +31,7 @@ mkdir -p "$BUILD" "$SITE"
 
 echo ">>> [extras/07] Fetching scikit-image $SK_VERSION sdist..."
 SK_URL="$(curl -s "https://pypi.org/pypi/scikit-image/$SK_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$SK_URL" ] || { echo "ERROR: scikit-image sdist not found"; exit 1; }
 if [ ! -d "$BUILD/scikit_image-$SK_VERSION" ]; then
     curl -sL -o "$BUILD/scikit-image-$SK_VERSION.tar.gz" "$SK_URL"

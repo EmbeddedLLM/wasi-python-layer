@@ -37,7 +37,7 @@ echo ">>> [extras/01] Downloading pure wheels (sympy $SYMPY_VERSION, mpmath $MPM
 # simplejson: force the py3-none-any PURE wheel by URL — pip resolves the cp314
 # manylinux wheel (host .so) when left to --only-binary :all: (2026-08-05 lesson).
 SIMPLEJSON_URL="$(curl -s "https://pypi.org/pypi/simplejson/$SIMPLEJSON_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith("py3-none-any.whl")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith("py3-none-any.whl")) | .url' | sed -n '1p')"
 [ -n "$SIMPLEJSON_URL" ] || { echo "ERROR: no py3-none-any wheel for simplejson $SIMPLEJSON_VERSION"; exit 1; }
 curl -sL -o "$DL/simplejson-$SIMPLEJSON_VERSION-py3-none-any.whl" "$SIMPLEJSON_URL"
 

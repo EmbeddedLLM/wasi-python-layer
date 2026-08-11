@@ -53,4 +53,4 @@ cp "$PKGDIR/"*.py "$SITE/regex/"
     "$CROSS_PREFIX/lib/libpython3.14.so" \
     -o "$SITE/regex/_regex.cpython-314-wasm32-wasi.so"
 
-ls -la "$SITE/regex/" | head -6
+ls -la "$SITE/regex/" | sed -n "1,6p"

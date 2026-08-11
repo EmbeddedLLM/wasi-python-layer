@@ -225,8 +225,12 @@ cd "$BUILD/build"
   -lc++ -lwasi-emulated-process-clocks -lwasi-emulated-getpid -lwasi-emulated-signal \
   "$BUILD/cxx_eh_stub.o" "$BUILD/setjmp_stub.o" \
   -L"$WASI_SDK/share/wasi-sysroot/lib/wasm32-wasip2"
-"$WASI_SDK/bin/llvm-objdump" -h cv2.cpython-314-wasm32-wasi.so | grep -q dylink \
+# grep -q + pipefail race: capture first.
+CV2_SECTIONS="$(mktemp)"
+"$WASI_SDK/bin/llvm-objdump" -h cv2.cpython-314-wasm32-wasi.so > "$CV2_SECTIONS" 2>/dev/null || true
+grep -q dylink "$CV2_SECTIONS" \
     || { echo "ERROR: cv2 .so has no dylink section"; exit 1; }
+rm -f "$CV2_SECTIONS"
 
 # --- 6. assemble the cv2 package + patch the bootstrap ------------------------
 echo ">>> [extras/08] Assembling cv2 package..."

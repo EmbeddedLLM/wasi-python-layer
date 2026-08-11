@@ -18,7 +18,7 @@ mkdir -p "$BUILD"
 
 echo ">>> [extras/04] Fetching PyYAML $PY_VERSION sdist..."
 PY_URL="$(curl -s "https://pypi.org/pypi/pyyaml/$PY_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$PY_URL" ] || { echo "ERROR: pyyaml sdist not found"; exit 1; }
 if [ ! -d "$BUILD/src" ]; then
     curl -sL -o "$BUILD/pyyaml-$PY_VERSION.tar.gz" "$PY_URL"
