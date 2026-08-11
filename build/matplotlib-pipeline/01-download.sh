@@ -16,14 +16,24 @@ download() {
         rm -f "$file"
     fi
     echo "  [download] $file"
-    curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 "$url" -o "$file"
+    if ! curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 "$url" -o "$file"; then
+        if [ -n "${3:-}" ]; then
+            echo "  [mirror] $file from $3 (primary failed)"
+            curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 30 "$3" -o "$file"
+        else
+            return 1
+        fi
+    fi
 }
 
 echo ">>> Downloading sources..."
 download "https://files.pythonhosted.org/packages/source/m/matplotlib/matplotlib-3.11.1.tar.gz" \
          "matplotlib-3.11.1.tar.gz"
+# savannah is the known-flaky mirror (502 bursts — matplotlib doc §7); the
+# sibling download-mirror host serves the same release tree (verified 200).
 download "https://download.savannah.nongnu.org/releases/freetype/freetype-2.14.3.tar.xz" \
-         "freetype-2.14.3.tar.xz"
+         "freetype-2.14.3.tar.xz" \
+         "https://download-mirror.savannah.gnu.org/releases/freetype/freetype-2.14.3.tar.xz"
 download "https://github.com/qhull/qhull/archive/v8.0.2/qhull-8.0.2.tar.gz" \
          "qhull-8.0.2.tar.gz"
 download "https://files.pythonhosted.org/packages/source/c/contourpy/contourpy-1.3.2.tar.gz" \
