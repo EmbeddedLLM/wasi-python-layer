@@ -25,6 +25,13 @@ if ! grep -q '\-lf2c' "$PC"; then
   echo "[scipy-cross] openblas.pc: added -lf2c to Libs.private"
 fi
 export PKG_CONFIG_LIBDIR="$DEPS/lib/pkgconfig:$NUPY/numpy/_core/lib/pkgconfig"
+# Neutralize a poisoned PKG_CONFIG_PATH: GitHub's setup-python exports one
+# pointing at the hostedtoolcache, whose python3.pc makes meson's cython
+# sanity check resolve the NATIVE python3 dep (host paths, no include) and
+# fail with 'Python.h not found' in sanity_check_for_cython.c — while a clean
+# env falls back to cross-python.sh and passes. The scipy deps come via
+# PKG_CONFIG_LIBDIR (openblas/f2c), so PKG_CONFIG_PATH must be empty here.
+unset PKG_CONFIG_PATH || true
 
 # ── sjlj stub (setjmp/longjmp shim, see sjlj-shim/setjmp.h) ───────────────
 "$WASI_SDK_PATH/bin/clang" --target=wasm32-wasip2 \
