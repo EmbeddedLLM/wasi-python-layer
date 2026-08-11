@@ -32,7 +32,7 @@ mkdir -p "$BUILD" "$SITE"
 
 echo ">>> [extras/06] Fetching tiktoken $TT_VERSION sdist..."
 TT_URL="$(curl -s "https://pypi.org/pypi/tiktoken/$TT_VERSION/json" \
-    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | head -1)"
+    | jq -r '.urls[] | select(.filename | endswith(".tar.gz")) | .url' | sed -n '1p')"
 [ -n "$TT_URL" ] || { echo "ERROR: tiktoken sdist not found"; exit 1; }
 if [ ! -d "$BUILD/tiktoken-$TT_VERSION" ]; then
     curl -sL -o "$BUILD/tiktoken-$TT_VERSION.tar.gz" "$TT_URL"
@@ -77,8 +77,11 @@ cp tiktoken_ext/*.py "$SITE/tiktoken_ext/"
 # pymodule is _tiktoken (src/py.rs) — the crate cdylib is tiktoken.wasm.
 cp target/wasm32-wasip1/release/tiktoken.wasm \
     "$SITE/tiktoken/_tiktoken.cpython-314-wasm32-wasi.so"
+TIKTOKEN_SECTIONS="$(mktemp)"
 "$WASI_SDK/bin/llvm-objdump" -h "$SITE/tiktoken/_tiktoken.cpython-314-wasm32-wasi.so" \
-    | grep -q dylink || { echo "ERROR: _tiktoken .so has no dylink section"; exit 1; }
+    > "$TIKTOKEN_SECTIONS" 2>/dev/null || true
+grep -q dylink "$TIKTOKEN_SECTIONS" || { echo "ERROR: _tiktoken .so has no dylink section"; exit 1; }
+rm -f "$TIKTOKEN_SECTIONS"
 
 echo ">>> [extras/06] Baking tokenizer data (sha256-verified)..."
 # expected hashes are the hardcoded values in tiktoken_ext/openai_public.py
@@ -140,5 +143,5 @@ p.write_text(src.replace(old, new))
 print("  patched registry.py")
 EOF
 
-ls -la "$SITE/tiktoken/" | head -8
+ls -la "$SITE/tiktoken/" | sed -n "1,8p"
 echo ">>> [extras/06] done"
