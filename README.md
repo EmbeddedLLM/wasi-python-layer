@@ -38,9 +38,12 @@ host-arch-independent). Contents:
 
 **Scientific stack:** numpy 2.5.1 (meson) · pandas 3.0.3 (bypass) · matplotlib
 3.11.1 (Agg backend) + contourpy, kiwisolver, cycler, fonttools, packaging,
-pyparsing, python-dateutil, pytz, tzdata · scikit-image (51 Cython modules) ·
-opencv 4.12.0 (`cv2`: core, imgproc, imgcodecs, objdetect, features2d, calib3d,
-flann + python3 module)
+pyparsing, python-dateutil, pytz, tzdata · scipy 1.18.0 (f2c/OpenBLAS ABI —
+linalg, ndimage, fft, optimize, signal, sparse, special, stats, spatial,
+integrate, interpolate, cluster, constants; all Eryx runtime-gated) ·
+scikit-image 0.26.0 (51 Cython modules, full scipy-dependent surface —
+color/filters/morphology/measure/segmentation/…) · opencv 4.12.0 (`cv2`: core,
+imgproc, imgcodecs, objdetect, features2d, calib3d, flann + python3 module)
 
 **I/O & parsing:** Pillow 9.5.0 (T1 image formats: webp decode/save/animation,
 tiff, jpeg2000, jpeg, png, freetype2, imagequant; webp + imaging METH_NOARGS
@@ -69,11 +72,12 @@ pre-imports at factory build and imports at runtime.
   wheels: consumers pin and bundle their own network-client versions into
   their factory, so they own the network contract and versions.
 - **networkx is excluded** — it needs `bz2`/`_bz2`, absent from the wasm build.
-- **scikit-image is scipy-free only at the top level** — `util`, `draw`,
-  `exposure`, `_shared` work; `color`, `io`, and the scipy-dependent submodules
-  (`transform`, `restoration`, `graph`, …) raise on use because scipy is not
-  buildable for wasm32-wasip2 (BLAS/LAPACK). The functional sweep
-  (`scripts/verify-functionality.py`) pins the verified set.
+- **skimage's decompositions tables are baked** — `skimage.morphology`
+  `np.load`s `disk/ball_decompositions.npy` at import; the erics VFS rejects
+  numpy's native file reads (ENOSYS), so `build/extras/07-skimage.sh` embeds
+  the two uint8 tables as literals. The full scipy-dependent surface
+  (`color`, `filters`, `morphology`, `measure`, `segmentation`, …) is
+  gate-asserted in the functional sweep.
 - **imageio ships in the tree and imports from the mount, but is not
   gate-asserted** (skimage.io is out of scope).
 - **pyyaml is pure-Python fallback only** — no `_yaml` C extension (documented
@@ -126,3 +130,10 @@ then `gh release create <tag> <tarball> SHA256SUMS.txt`.
 The gate builds an eryx `SandboxFactory` from the assembled tree, so the CI
 pins a pyeryx release wheel from the org's eryx repo (see
 `source-gate.yml`). Bump that pin together with the consumers' runtime pin.
+
+**Requires pyeryx ≥ v0.5.0-instance-cap.1** (EmbeddedLLM/eryx
+`fix/wasm-instance-cap`): the layer is 246 native extensions, over the
+~230-extension cap of stock wasmparser's 1000-instance component guard;
+the patched runtime raises it to 4096 (spec-legal — it is a DoS guard, not a
+spec limit). Older pyeryx builds fail `SandboxFactory` with "instances count
+exceeds limit of 1000".

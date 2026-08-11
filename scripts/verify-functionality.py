@@ -80,10 +80,24 @@ CHECKS = {
         "import sympy as sp; x = sp.symbols('x'); "
         "assert sp.simplify((x + 1) ** 2 - x**2 - 2 * x) == 1; print('OK')"
     ),
+    "scipy": (
+        "import numpy as np; from scipy import linalg, ndimage, fft; "
+        "from scipy import sparse; from scipy.sparse.linalg import spsolve; "
+        "A = np.array([[3., 1.], [1., 2.]]); b = np.array([9., 8.]); "
+        "xs = linalg.solve(A, b); assert np.allclose(xs, [2., 3.]); "
+        "x = np.zeros((9, 9)); x[4, 4] = 1; y = ndimage.gaussian_filter(x, 1.0); "
+        "assert y.shape == (9, 9) and y[4, 4] > y[0, 0]; "
+        "yf = fft.fft(np.array([1., 2., 3., 4.])); assert len(yf) == 4; "
+        "A2 = sparse.csr_matrix([[3., 1.], [1., 2.]]); "
+        "x2 = spsolve(A2, b); assert np.allclose(x2, [2., 3.]); print('OK')"
+    ),
     "skimage": (
-        "import numpy as np, skimage.util as u; "
-        "a = u.img_as_float(np.zeros((4, 4), dtype='uint8')); "
-        "assert a.shape == (4, 4); print('OK')"
+        "import numpy as np; from skimage.color import rgb2gray; "
+        "from skimage.filters import gaussian; from skimage import morphology; "
+        "a = np.zeros((8, 8, 3), dtype='uint8'); "
+        "g = rgb2gray(a); assert g.shape == (8, 8); "
+        "b = gaussian(a[:, :, 0].astype(float), sigma=1.0); assert b.shape == (8, 8); "
+        "assert morphology.disk(3).shape == (7, 7); print('OK')"
     ),
     "cv2": (
         "import cv2, numpy as np; m = np.zeros((4, 4, 3), dtype='uint8'); "
@@ -105,10 +119,12 @@ def main() -> None:
 
     factory = eryx.SandboxFactory(site_packages=str(site), packages=[], imports=["numpy"])
     # Mirror the consumer's runtime: writable /tmp (tiktoken's cache dir and
-    # other tempfile users need it; a bare sandbox has no /tmp).
+    # other tempfile users need it; a bare sandbox has no /tmp) and the
+    # site-packages tree mounted read-only at /site-packages (package data
+    # files — fonts, .npy tables — are not part of the baked snapshot).
     sandbox = factory.create_sandbox(
         resource_limits=eryx.ResourceLimits(execution_timeout_ms=_EXEC_TIMEOUT_MS),
-        volumes=[("/tmp", "/tmp", False)],
+        volumes=[("/tmp", "/tmp", False), (str(site), "/site-packages", True)],
     )
     failed = 0
     for name, code in CHECKS.items():

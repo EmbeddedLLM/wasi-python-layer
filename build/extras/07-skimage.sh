@@ -1,16 +1,14 @@
 #!/bin/bash
-# extras/07-skimage.sh — scikit-image (meson/Cython cross-build, scipy-free subset).
+# extras/07-skimage.sh — scikit-image (meson/Cython cross-build).
 #
-# scipy is NOT available for wasm32-wasip2 (BLAS/LAPACK mandatory in scipy's
-# meson; OpenBLAS for wasi needs a Fortran-free C_LAPACK build + f2c — multi-week
-# port, see design_docs/code_interpreter_wasm_packages_build.md Checkpoint 6).
-# skimage's top-level import is scipy-free (lazy_loader). Verified working
-# WITHOUT scipy (functional sweep, 2026-08-06): _shared, util, draw,
-# exposure. NOT working: color (colorconv needs scipy.linalg), io, and the
-# (io needs the pure deps networkx/imageio/tifffile/lazy_loader). The
-# scipy-dependent submodules (filters, morphology, measure, segmentation,
-# transform, restoration, graph, metrics, feature-partial) raise ImportError on
-# use — documented, not silently broken.
+# scipy 1.18.0 IS available for wasm32-wasip2 as of 2026-08-10 (the scipy
+# pipeline: libf2c + OpenBLAS + C_LAPACK f2c ABI, see
+# design_docs/code_interpreter_wasm_scipy_build.md) and ships in the same
+# layer, so skimage's full scipy-dependent surface is enabled — color
+# (colorconv), filters, morphology, measure, segmentation, transform,
+# restoration, graph, metrics, feature. Earlier builds shipped a scipy-free
+# subset with module-level scipy imports guarded; that guard was removed with
+# the scipy enablement (2026-08-10). Verified in the functional sweep.
 #
 # Build: meson cross (numpy 02-numpy251.sh recipe): wasm32-wasip2 clang,
 # cross-python.sh (wasm sysconfig), -Dnumpy-include-dir points at the wasm numpy
@@ -122,54 +120,36 @@ if [ -d "$INST/usr/local" ]; then
 else
     echo "ERROR: no install output; build failed above"; exit 1
 fi
-# scipy is NOT available on wasm (BLAS/LAPACK port — see worklog Checkpoint 6).
-# Guard every module-level scipy import so submodules LOAD; the scipy-using
-# functions fail at call time with a clear AttributeError instead of an
-# import-time ModuleNotFoundError. Working subset: util, exposure, draw core.
+# scipy 1.18.0 IS available on wasm as of 2026-08-10 (scipy-pipeline, see
+# design_docs/code_interpreter_wasm_scipy_build.md) and ships in the same
+# layer, so skimage's scipy-dependent surface is fully enabled: color
+# (colorconv -> scipy.linalg/ndimage), filters, morphology, measure,
+# segmentation, transform, restoration, graph, metrics, feature. No import
+# guards.
+# erics VFS gap: C-level reads on mounted/baked site files return ENOSYS, so
+# skimage.morphology's import-time np.load of disk/ball_decompositions.npy
+# fails in every erics sandbox (python open() works, numpy's native file IO
+# does not). Bake the two uint8 repetition tables into footprints.py as
+# literals (they are small: (251,3) / (101,3)). Idempotent.
 python3 - <<EOF
-import re
+import numpy as np
 from pathlib import Path
-pat = re.compile(r"^(from scipy\..*|from scipy import .*|import scipy( as .*)?)$")
-n = 0
-for p in Path("$SITE/skimage").rglob("*.py"):
-    lines = p.read_text(errors="ignore").split("\n")
-    out = []
-    changed = False
-    for line in lines:
-        if pat.match(line.strip()):
-            indent = line[: len(line) - len(line.lstrip())]
-            if line.strip().startswith("import scipy"):
-                out.append(f"{indent}try:")
-                out.append(f"{indent}    {line.strip()}")
-                out.append(f"{indent}except ImportError:")
-                out.append(f"{indent}    sp = None" if " as sp" in line else f"{indent}    scipy = None")
-            else:
-                name = line.strip().split()[-1]
-                out.append(f"{indent}try:")
-                out.append(f"{indent}    {line.strip()}")
-                out.append(f"{indent}except ImportError:")
-                out.append(f"{indent}    {name} = None")
-            changed = True
-            n += 1
-        else:
-            out.append(line)
-    if changed:
-        p.write_text("\n".join(out))
-print(f"  guarded {n} scipy imports")
-EOF
-# _shared/compat.py computes module-level constants from scipy — guard them too.
-python3 - <<EOF
-from pathlib import Path
-p = Path("$SITE/skimage/_shared/compat.py")
+d = Path("$SITE/skimage/morphology")
+disk = np.load(d / "disk_decompositions.npy", allow_pickle=False).tolist()
+ball = np.load(d / "ball_decompositions.npy", allow_pickle=False).tolist()
+p = d / "footprints.py"
 src = p.read_text()
-src = src.replace(
-    "SCIPY_LT_1_12 = parse(sp.__version__) < parse('1.12')",
-    "try:\n    SCIPY_LT_1_12 = parse(sp.__version__) < parse('1.12')\nexcept (AttributeError, TypeError):\n    SCIPY_LT_1_12 = False  # scipy unavailable (wasm)")
-src = src.replace(
-    "SCIPY_GE_1_17_0_DEV0 = parse('1.17.0.dev0') <= parse(sp.__version__)",
-    "try:\n    SCIPY_GE_1_17_0_DEV0 = parse('1.17.0.dev0') <= parse(sp.__version__)\nexcept (AttributeError, TypeError):\n    SCIPY_GE_1_17_0_DEV0 = False  # scipy unavailable (wasm)")
-p.write_text(src)
-print("  compat.py guarded")
+if "WASI-baked" in src:
+    print("  footprints.py already baked")
+else:
+    old2 = "_nsphere_decompositions[2] = np.load(\n    os.path.join(os.path.dirname(__file__), 'disk_decompositions.npy')\n)"
+    old3 = "_nsphere_decompositions[3] = np.load(\n    os.path.join(os.path.dirname(__file__), 'ball_decompositions.npy')\n)"
+    assert old2 in src and old3 in src, "footprints.py np.load lines not found"
+    new2 = "_nsphere_decompositions[2] = np.array(\n    %r, dtype=np.uint8\n)  # WASI-baked (np.load unavailable in erics)" % (disk,)
+    new3 = "_nsphere_decompositions[3] = np.array(\n    %r, dtype=np.uint8\n)  # WASI-baked (np.load unavailable in erics)" % (ball,)
+    src = src.replace(old2, new2).replace(old3, new3)
+    p.write_text(src)
+    print("  footprints.py decompositions baked (disk %dx3, ball %dx3)" % (len(disk), len(ball)))
 EOF
 echo ">>> [extras/07] Installed:"
 ls -d "$SITE/skimage" "$SITE/networkx" "$SITE/imageio" "$SITE/tifffile" "$SITE/lazy_loader"

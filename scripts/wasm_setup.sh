@@ -55,8 +55,27 @@ else
 fi
 
 # 4: lxml + bs4 + extras (idempotent per-package)
-echo ">>> [4/4] lxml + bs4 + extras..."
+echo ">>> [4/5] lxml + bs4 + extras..."
 bash "$REPO/build/assemble-extra.sh" "$BUILD_SITE" "$MPL" "$PY"
+
+# 5: scipy 1.18.0 (libf2c/OpenBLAS substrate + cross build into
+#    $WASI_BUILD/scipy-build, then appended into BUILD_SITE — append-only, never
+#    recreates the site; see design_docs/code_interpreter_wasm_scipy_build.md
+#    Stage 18). The wasm32-wasip2 .so extensions need the erics runtime with
+#    the raised component-instance cap (EmbeddedLLM/eryx fix/wasm-instance-cap,
+#    pyeryx v0.5.0-instance-cap.1) — the full layer + scipy is 246 extensions,
+#    over the ~230-extension cap of stock wasmparser's 1000-instance guard.
+if [ ! -d "$BUILD_SITE/scipy" ]; then
+    echo ">>> [5/5] scipy pipeline (libf2c + OpenBLAS + scipy 1.18.0)..."
+    bash "$REPO/build/scipy-pipeline/01-libf2c.sh"
+    bash "$REPO/build/scipy-pipeline/02-openblas.sh"
+    bash "$REPO/build/scipy-pipeline/07-scipy-prep.sh"
+    bash "$REPO/build/scipy-pipeline/08-scipy-cross.sh"
+    bash "$REPO/build/scipy-pipeline/09-scipy-build.sh"
+    bash "$REPO/build/scipy-pipeline/11-assemble.sh" "$BUILD_SITE"
+else
+    echo ">>> [skip] scipy"
+fi
 
 echo ""
 echo "=== DONE ==="

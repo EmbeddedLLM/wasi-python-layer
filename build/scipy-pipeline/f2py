@@ -1,0 +1,9 @@
+#!/bin/bash
+# f2py wrapper for the scipy WASI cross build: runs the host f2py with the
+# cross-build PYTHONPATH REMOVED (it points at the wasm numpy + the
+# get_include stub, neither importable as a real numpy). f2py needs the
+# build-venv's host numpy. Generation runs on the host; only the emitted C
+# is cross-compiled.
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+unset PYTHONPATH
+exec /tmp/wasi-build/build-venv/bin/f2py "$@"
