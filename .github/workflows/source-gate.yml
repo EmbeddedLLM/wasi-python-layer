@@ -57,3 +57,17 @@ jobs:
         timeout-minutes: 15
         env:
           WASI_BUILD: /tmp/wasi-build
+
+      - name: Pipeline lint (cold-build bug classes)
+        run: |
+          set -euo pipefail
+          # grep -q closes its pipe on the first match -> the producer dies on
+          # SIGPIPE and set -o pipefail turns the pipeline into exit 141 ->
+          # silent false-FAIL (bit us 3x: libf2c file|head, libf2c nm|grep -q,
+          # openblas ar|grep -q). A "| grep -q" in a pipeline script is a
+          # latent cold-build bug; the producer must be captured to a file.
+          if grep -rnE '\| *(grep|head|tail)( +-[a-z]| |$)' build/ --include='*.sh' | grep -v '|| true'; then
+            echo "FAIL: pipeline scripts must not pipe into grep -q/head/tail (SIGPIPE + pipefail = exit 141)" >&2
+            exit 1
+          fi
+          echo "pipeline lint OK"

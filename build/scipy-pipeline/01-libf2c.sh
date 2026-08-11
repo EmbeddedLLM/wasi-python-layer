@@ -76,12 +76,18 @@ cp -f F2CLIBS/libf2c.a "$DEPS/lib/libf2c.a"
 echo "[libf2c] validating..."
 OBJ="$("$WASI_SDK_PATH/bin/llvm-ar" t "$DEPS/lib/libf2c.a" | head -1)"
 mkdir -p /tmp/f2c-check && ( cd /tmp/f2c-check && "$WASI_SDK_PATH/bin/llvm-ar" x "$DEPS/lib/libf2c.a" && file ./*.o 2>/dev/null | head -2 || true )
+# grep -q closes the pipe on first match -> the producer (llvm-nm) dies on
+# SIGPIPE and pipefail turns the pipeline into exit 141 -> false FAIL.
+# Capture the symbol table to a file first (deterministic).
+NM_SYMS="$(mktemp)"
+"$WASI_SDK_PATH/bin/llvm-nm" "$DEPS/lib/libf2c.a" 2>/dev/null > "$NM_SYMS" || true
 for sym in pow_dd pow_di s_copy s_cmp i_len; do
-  if "$WASI_SDK_PATH/bin/llvm-nm" "$DEPS/lib/libf2c.a" 2>/dev/null | grep -q " $sym$"; then
+  if grep -q " $sym$" "$NM_SYMS"; then
     echo "  [ok] symbol $sym"
   else
     echo "  [FAIL] missing symbol $sym" >&2
     exit 1
   fi
 done
+rm -f "$NM_SYMS"
 echo "[libf2c] DONE: $DEPS/lib/libf2c.a ($(du -h "$DEPS/lib/libf2c.a" | cut -f1)) + f2c.h"

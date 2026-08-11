@@ -77,7 +77,11 @@ mkdir -p "$SITE/orjson"
 cp "$BUILD/orjson-$OJ_VERSION/pysrc/orjson/"*.py "$SITE/orjson/"
 cp target/wasm32-wasip1/release/orjson.wasm "$SITE/orjson/orjson.cpython-314-wasm32-wasi.so"
 # Guard: the module must be a WASI dylib (dylink.0), not a static reactor.
-"$WASI_SDK/bin/llvm-objdump" -h "$SITE/orjson/orjson.cpython-314-wasm32-wasi.so" | grep -q dylink \
+# grep -q + pipefail race (SIGPIPE 141): capture first.
+ORJSON_SECTIONS="$(mktemp)"
+"$WASI_SDK/bin/llvm-objdump" -h "$SITE/orjson/orjson.cpython-314-wasm32-wasi.so" > "$ORJSON_SECTIONS" 2>/dev/null || true
+grep -q dylink "$ORJSON_SECTIONS" \
     || { echo "ERROR: orjson .so has no dylink section"; exit 1; }
+rm -f "$ORJSON_SECTIONS"
 
 ls -la "$SITE/orjson/"

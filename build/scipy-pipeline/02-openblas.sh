@@ -155,11 +155,15 @@ make libs -j"$(nproc)" OSNAME=Linux ARCH=riscv64 TARGET=RISCV64_GENERIC HOSTCC=g
 make netlib OSNAME=Linux ARCH=riscv64 TARGET=RISCV64_GENERIC HOSTCC=gcc CFLAGS="-D_WASI_EMULATED_MMAN -DNO_SYSV_IPC" -j"$(nproc)"
 make install OSNAME=Linux ARCH=riscv64 TARGET=RISCV64_GENERIC HOSTCC=gcc CFLAGS="-D_WASI_EMULATED_MMAN -DNO_SYSV_IPC" NO_SHARED=1 PREFIX="$DEPS"
 # merge the netlib archive into libopenblas.a (single -lopenblas for scipy)
-if [ -f "$SRC/lapack-netlib/SRC/liblapack.a" ] && ! "$WASI_SDK_PATH/bin/llvm-ar" t "$DEPS/lib/libopenblas.a" | grep -q "^ztpqrt"; then
+# grep -q + pipefail race (SIGPIPE 141): capture the listing first.
+OBLAS_ARCHIVE_T="$(mktemp)"
+"$WASI_SDK_PATH/bin/llvm-ar" t "$DEPS/lib/libopenblas.a" > "$OBLAS_ARCHIVE_T" 2>/dev/null || true
+if [ -f "$SRC/lapack-netlib/SRC/liblapack.a" ] && ! grep -q "^ztpqrt" "$OBLAS_ARCHIVE_T"; then
   echo "[openblas] merging netlib liblapack.a into libopenblas.a"
   "$WASI_SDK_PATH/bin/llvm-ar" q "$DEPS/lib/libopenblas.a" "$SRC/lapack-netlib/SRC/liblapack.a"
   "$WASI_SDK_PATH/bin/llvm-ranlib" "$DEPS/lib/libopenblas.a"
 fi
+rm -f "$OBLAS_ARCHIVE_T"
 
 # ── Stage 3 validation ─────────────────────────────────────────────────────
 echo "[openblas] validating..."
