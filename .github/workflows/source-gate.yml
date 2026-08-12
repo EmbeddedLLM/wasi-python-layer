@@ -39,7 +39,7 @@ jobs:
           # pyeryx (the eryx pyo3 layer) from the org release wheel. This is the
           # runtime-rev pin for the gate: bump it together with your consumers'
           # runtime pin when they adopt a newer engine.
-          .venv/bin/pip install -q "pyeryx @ https://github.com/EmbeddedLLM/eryx/releases/download/v0.5.0-instance-cap.1/pyeryx-0.5.0-cp312-abi3-manylinux_2_39_x86_64.whl"
+          .venv/bin/pip install -q "pyeryx @ https://github.com/EmbeddedLLM/eryx/releases/download/v0.5.0-instance-cap.2/pyeryx-0.5.0-cp312-abi3-manylinux_2_39_x86_64.whl"
 
       - name: From-scratch build (wasm_setup.sh)
         run: |

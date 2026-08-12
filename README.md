@@ -39,6 +39,7 @@ host-arch-independent). Contents:
 **Scientific stack:** numpy 2.5.1 (meson) · pandas 3.0.3 (bypass) · matplotlib
 3.11.1 (Agg backend) + contourpy, kiwisolver, cycler, fonttools, packaging,
 pyparsing, python-dateutil, pytz, tzdata · scipy 1.18.0 (f2c/OpenBLAS ABI —
+built at `-O3 -msimd128` with meson `buildtype=release` —
 linalg, ndimage, fft, optimize, signal, sparse, special, stats, spatial,
 integrate, interpolate, cluster, constants; all Eryx runtime-gated) ·
 scikit-image 0.26.0 (51 Cython modules, full scipy-dependent surface —
@@ -131,9 +132,12 @@ The gate builds an eryx `SandboxFactory` from the assembled tree, so the CI
 pins a pyeryx release wheel from the org's eryx repo (see
 `source-gate.yml`). Bump that pin together with the consumers' runtime pin.
 
-**Requires pyeryx ≥ v0.5.0-instance-cap.1** (EmbeddedLLM/eryx
-`fix/wasm-instance-cap`): the layer is 246 native extensions, over the
-~230-extension cap of stock wasmparser's 1000-instance component guard;
-the patched runtime raises it to 4096 (spec-legal — it is a DoS guard, not a
-spec limit). Older pyeryx builds fail `SandboxFactory` with "instances count
-exceeds limit of 1000".
+**Requires pyeryx ≥ v0.5.0-instance-cap.2** (EmbeddedLLM/eryx
+`fix/wasm-instance-cap`): (a) the layer is 246 native extensions, over the
+~230-extension cap of stock wasmparser's 1000-instance component guard — the
+patched runtime raises it to 4096 (spec-legal — it is a DoS guard, not a spec
+limit); (b) v0.5.0-instance-cap.2 adds the hostcall-fuel raise
+(`ERYX_HOSTCALL_FUEL_MB`, needed for consumers that pre-import the
+scipy/skimage chain at factory build) and the R1 fuel-metering knob
+(`ERYX_FUEL_MODE=off`). Older pyeryx builds fail `SandboxFactory` with
+"instances count exceeds limit of 1000".
