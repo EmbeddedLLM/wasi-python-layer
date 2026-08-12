@@ -76,9 +76,9 @@ python = '$WASI_BUILD/cross-python.sh'
 pkg-config = '/usr/bin/pkg-config'
 
 [built-in options]
-c_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-fPIC', '-D__EMSCRIPTEN__=1', '-Wcast-function-type-strict', '-D_WASI_EMULATED_SIGNAL', '-DFE_UPWARD=0x800', '-DFE_DOWNWARD=0x400', '-mno-atomics', '-I$HERE/sjlj-shim']
+c_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-fPIC', '-O3', '-msimd128', '-D__EMSCRIPTEN__=1', '-Wcast-function-type-strict', '-D_WASI_EMULATED_SIGNAL', '-DFE_UPWARD=0x800', '-DFE_DOWNWARD=0x400', '-mno-atomics', '-I$HERE/sjlj-shim']
 c_link_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-shared', '-fuse-ld=lld', '-Wl,--experimental-pic', '-Wl,--unresolved-symbols=import-dynamic', '-L$DEPS/lib', '-lwasi-emulated-signal', '$HERE/setjmp_stub.o', '-lc++', '$HERE/cxx_eh_stub.o']
-cpp_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-fPIC', '-D__EMSCRIPTEN__=1', '-Wcast-function-type-strict', '-D_WASI_EMULATED_SIGNAL', '-DFE_UPWARD=0x800', '-DFE_DOWNWARD=0x400', '-mno-atomics', '-I$HERE/sjlj-shim']
+cpp_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-fPIC', '-O3', '-msimd128', '-DDUCC0_NO_LOWLEVEL_THREADING', '-D__EMSCRIPTEN__=1', '-Wcast-function-type-strict', '-D_WASI_EMULATED_SIGNAL', '-DFE_UPWARD=0x800', '-DFE_DOWNWARD=0x400', '-mno-atomics', '-I$HERE/sjlj-shim']
 cpp_link_args = ['--target=wasm32-wasip2', '--sysroot=$WASI_SDK_PATH/share/wasi-sysroot', '-shared', '-fuse-ld=lld', '-Wl,--experimental-pic', '-Wl,--unresolved-symbols=import-dynamic', '-L$DEPS/lib', '-lwasi-emulated-signal', '$HERE/setjmp_stub.o', '-lc++', '$HERE/cxx_eh_stub.o']
 
 [host_machine]
@@ -87,6 +87,7 @@ cpu_family = 'wasm32'
 cpu = 'wasm32'
 endian = 'little'
 
+buildtype = 'release'
 [properties]
 needs_exe_wrapper = true
 sys_root = '$WASI_SDK_PATH/share/wasi-sysroot'

@@ -23,7 +23,7 @@ if [ ! -x venv/bin/python ]; then
 fi
 . venv/bin/activate
 
-WASI_CFLAGS="--target=$TARGET --sysroot=${WASI_SYSROOT} -fPIC"
+WASI_CFLAGS="--target=$TARGET --sysroot=${WASI_SYSROOT} -fPIC -O3 -msimd128"
 
 # ── zlib ─────────────────────────────────────────────────────────────────────
 if [ ! -f "${DEPS_PREFIX}/lib/libz.a" ]; then
